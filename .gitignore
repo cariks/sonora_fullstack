@@ -1,0 +1,12 @@
+# Laravel
+/sonora-backend/vendor/
+/sonora-backend/node_modules/
+/sonora-backend/storage/*.key
+/sonora-backend/.env
+/sonora-backend/storage/logs/
+/sonora-backend/storage/framework/
+
+# Angular
+/sonora-frontend/node_modules/
+/sonora-frontend/dist/
+/sonora-frontend/.angular/cache
