@@ -9,7 +9,7 @@ class UserController extends Controller
 {
     public function showByUsername($username)
     {
-        $user = User::where('username', $username)->firstOrFail();
+        $user = User::with('primaryPhoto')->where('username', $username)->firstOrFail();
 
         return response()->json([
             'username' => $user->username,
@@ -18,7 +18,11 @@ class UserController extends Controller
             'surname' => $user->surname,
             'role' => $user->role,
             'bio' => $user->bio,
-            'subscribers_count' => 0, // Placeholder, add real logic later
+            'subscribers_count' => 0,
+            'photo' => $user->primaryPhoto?->photo_url
+                ? asset('storage/' . $user->primaryPhoto->photo_url)
+                : null,
         ]);
     }
+
 }

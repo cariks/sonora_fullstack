@@ -26,6 +26,21 @@ class AuthController extends Controller
         return response()->json(['message' => 'Unauthorized'], 401);
     }
 
+    public function me()
+    {
+        $user = Auth::user();
+
+        return response()->json([
+            'id' => $user->id,
+            'username' => $user->username,
+            'display_name' => $user->display_name ?? $user->username,
+            'role' => $user->role,
+            'photo' => $user->primaryPhoto?->photo_url
+                ? asset('storage/' . $user->primaryPhoto->photo_url)
+                : null
+        ]);
+    }
+
     public function logout(Request $request)
     {
         Auth::logout();
