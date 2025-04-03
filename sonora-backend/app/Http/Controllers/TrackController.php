@@ -9,7 +9,7 @@ class TrackController extends Controller
 {
     public function index()
     {
-        $tracks = Track::with('activeVersion')->get();
+        $tracks = \App\Models\Track::with('activeVersion')->get();
 
         return response()->json($tracks->map(function ($track) {
             return [
