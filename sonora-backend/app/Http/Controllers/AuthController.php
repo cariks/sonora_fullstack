@@ -33,8 +33,13 @@ class AuthController extends Controller
         return response()->json([
             'id' => $user->id,
             'username' => $user->username,
+            'email' => $user->email,
             'display_name' => $user->display_name ?? $user->username,
+            'date_of_birth' => $user->date_of_birth,
+            'bio' => $user->bio,
             'role' => $user->role,
+            'verified' => $user->verified,
+            'last_online' => $user->last_online,
             'photo' => $user->primaryPhoto?->photo_url
                 ? asset('storage/' . $user->primaryPhoto->photo_url)
                 : null
