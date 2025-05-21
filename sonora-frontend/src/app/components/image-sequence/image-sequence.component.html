@@ -1,0 +1,13 @@
+<div
+  class="w-full h-full transition-all duration-[1500ms] ease-[cubic-bezier(0.19,1,0.22,1)]"
+  [ngClass]="{
+    'opacity-0 blur-xl scale-[105%]': !ready,
+    'opacity-100 blur-0 scale-100': ready
+  }"
+>
+  <img
+    [src]="currentSrc"
+    class="w-full h-full object-cover"
+    alt="animation frame"
+  />
+</div>

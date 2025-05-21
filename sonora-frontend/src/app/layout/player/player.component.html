@@ -1,0 +1,85 @@
+<div class="flex h-full relative">
+  <!-- Resize bar -->
+  <div
+    class="absolute top-0 left-0 h-full w-1.5 cursor-ew-resize hover:bg-neutral-700 transition"
+    (mousedown)="onResizeStart($event)"
+    (dblclick)="onResizeReset()"
+  ></div>
+
+  <!-- Player content -->
+  <div
+    class="flex-1 pl-1.5 p-6 flex flex-col justify-between bg-neutral-900 text-white h-full "
+    [ngClass]="bounceClass"
+  >
+    <!-- Current track info -->
+    <div class="flex flex-col gap-4">
+      <img
+        [src]="currentTrack?.cover_image || 'assets/default-cover.jpg'"
+        class="w-full object-cover rounded shadow"
+        alt="Cover"
+      />
+      <div>
+        <p class="text-md font-semibold truncate">
+          {{ currentTrack?.title || 'Nav izvēlēta dziesma' }}
+        </p>
+        <p class="text-sm text-neutral-400 truncate" *ngIf="currentTrack?.artist_name">
+          {{ currentTrack.artist_name }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex items-center justify-center gap-6 mt-6">
+      <button
+        (click)="togglePlay()"
+        class="w-12 h-12 flex items-center justify-center text-white bg-green-500 rounded-full shadow hover:bg-green-400 transition"
+      >
+        <i class="fas text-lg" [ngClass]="isPlaying ? 'fa-pause' : 'fa-play'"></i>
+      </button>
+    </div>
+
+    <!-- Volume Control -->
+    <div class="w-full mt-6 flex items-center gap-3">
+      <i class="fas fa-volume-down text-neutral-400 text-sm"></i>
+
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        [value]="volume"
+        (input)="onVolumeInput($event)"
+        class="flex-1 appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"
+      />
+
+
+
+      <i class="fas fa-volume-up text-neutral-400 text-sm"></i>
+    </div>
+
+
+
+    <!-- Progress Bar -->
+    <div class="w-full mt-4">
+      <input
+        type="range"
+        min="0"
+        [max]="duration"
+        [(ngModel)]="currentTime"
+        (input)="seek($event)"
+        (change)="onSeekEnd()"
+        (mousedown)="isSeeking = true"
+        (mouseup)="onSeekEnd()"
+        class="w-full appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"
+      />
+      <div class="flex justify-between text-xs text-neutral-400 mt-1">
+        <span>{{ formatTime(currentTime) }}</span>
+        <span>{{ formatTime(duration) }}</span>
+      </div>
+    </div>
+
+
+    <!-- Hidden audio -->
+    <audio #audioRef [src]="currentTrack?.audio_file" (ended)="onEnded()"></audio>
+  </div>
+</div>

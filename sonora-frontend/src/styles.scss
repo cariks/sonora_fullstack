@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body{
+  background-color: #0a0a0a;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  @apply font-sans;
+}
+
+body.no-transition * {
+  transition: none !important;
+}
+
+@keyframes bounceWidth {
+  0%    { transform: scaleX(1); }
+  25%   { transform: scaleX(1.025); }  // первый толчок
+  55%   { transform: scaleX(0.99); }   // спад
+  75%   { transform: scaleX(1.012); }  // второй мягкий отскок
+  100%  { transform: scaleX(1); }      // очень мягкий возврат
+}
+
+.bounce {
+  animation: bounceWidth 0.65s cubic-bezier(0.2, 0.6, 0.2, 1);
+  transform-origin: right center;
+}
+
+.icon-transition {
+  transition: all 1500ms cubic-bezier(.09,.98,0,1);
+}

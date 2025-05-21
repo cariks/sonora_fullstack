@@ -1,0 +1,33 @@
+<div class="p-8 bg-neutral-900 min-h-screen text-white overflow-y-scroll scrollbar-hide">
+  <!-- Top section: avatar + main info -->
+  <div class="flex flex-col md:flex-row items-center md:items-end gap-8">
+    <img
+      [src]="profileUser?.photo || 'assets/default-avatar.png'"
+      alt="Profils"
+      class="w-48 h-48 rounded-full border-4 border-neutral-700 object-cover shadow-lg"
+    />
+    <div>
+      <p class="uppercase text-sm text-neutral-400 font-semibold">Lietotāja profils</p>
+      <h1 class="text-5xl md:text-6xl font-bold">{{ profileUser?.display_name }}</h1>
+      <p class="text-neutral-400 mt-1 text-md">@{{ profileUser?.username }}</p>
+    </div>
+  </div>
+
+  <!-- Details -->
+  <div class="mt-8 space-y-2 text-neutral-300">
+    <p *ngIf="profileUser?.bio">{{ profileUser.bio }}</p>
+    <p *ngIf="profileUser?.name || profileUser?.surname" class="text-sm text-neutral-500">
+      {{ profileUser.name }} {{ profileUser.surname }}
+    </p>
+    <p class="text-sm">Loma: <span class="text-green-400 font-medium">{{ profileUser.role }}</span></p>
+    <p class="text-sm">Sekotāji: {{ profileUser.subscribers_count }}</p>
+  </div>
+
+  <!-- Divider -->
+  <div class="border-t border-neutral-700 mt-10 mb-6"></div>
+
+  <!-- Placeholder for content -->
+  <div class="text-neutral-500 text-center italic">
+    <p>Pleilisti un dziesmas tiks pievienoti drīzumā...</p>
+  </div>
+</div>

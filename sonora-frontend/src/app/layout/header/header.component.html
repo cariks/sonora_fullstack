@@ -1,0 +1,30 @@
+<header class="h-20 bg-neutral-900  px-8 flex items-center justify-between">
+<!-- Search -->
+  <div class="w-full max-w-md relative">
+    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+      <svg class="w-4 h-4 text-neutral-500 dark:text-neutral-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+      </svg>
+    </div>
+    <input
+      type="text"
+      placeholder="Meklēt..."
+      class="w-full p-3 ps-10 text-md placeholder:text-neutral-400 text-neutral-900 border-b-2  focus:outline-none focus:border-b focus:border-neutral-400 dark:bg-neutral-900 dark:border-neutral-600 dark:text-white dark:focus:border-white"
+    />
+  </div>
+
+  <!-- User icon + popup -->
+  <div class="relative" (click)="toggleMenu()">
+    <img
+      [src]="loggedInUser?.photo || 'assets/default-avatar.png'"
+      alt="Lietotājs"
+      class="w-10 h-10 rounded-full cursor-pointer border border-neutral-700 object-cover"
+    />
+
+    <!-- Popup menu -->
+    <div *ngIf="menuOpen" class="absolute right-0 mt-2 w-48 bg-neutral-800 text-white rounded shadow-lg py-2 z-20">
+      <button class="block w-full text-left px-4 py-2 hover:bg-neutral-700">Iestatījumi</button>
+      <button (click)="logout()" class="block w-full text-left px-4 py-2 hover:bg-neutral-700">Iziet</button>
+    </div>
+  </div>
+</header>

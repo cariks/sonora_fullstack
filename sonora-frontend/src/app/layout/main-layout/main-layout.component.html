@@ -1,0 +1,46 @@
+<div class="flex h-screen w-screen bg-neutral-950 text-white overflow-hidden">
+  <!-- Sidebar (width based on collapsed state) -->
+  <div class="relative transition-all duration-300"
+       [ngStyle]="{ width: isSidebarCollapsed ? '96px' : '315px' }">
+
+    <!-- Sidebar -->
+    <app-sidebar
+      [collapsed]="isSidebarCollapsed"
+      (toggle)="toggleSidebar()"
+    ></app-sidebar>
+
+    <!-- Hover Line -->
+    <div
+      class="absolute w-6 top-0 bottom-0 -right-3 flex justify-center items-center z-40 cursor-ew-resize group transition-all duration-300"
+      (click)="toggleSidebar()"
+    >
+      <div
+        class="h-[400px] w-1.5 rounded-full bg-neutral-800/0 group-hover:bg-neutral-800/50 transition duration-200 shadow-md shadow-black/20"
+      ></div>
+    </div>
+  </div>
+
+  <!-- Right side (grows naturally) -->
+  <div class="flex-1 z-30 flex flex-col overflow-hidden rounded-l-[40px]">
+    <app-header class="h-20 w-full shrink-0 border-b border-neutral-800 bg-neutral-900 z-20"></app-header>
+
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Main content) -->
+      <div
+        class="overflow-y-auto scrollbar-hide bg-neutral-900 transition-[width] duration-200 ease-in-out"
+        [style.width]="'calc(100% - ' + playerWidth + 'px)'"
+      >
+        <router-outlet></router-outlet>
+      </div>
+
+      <div
+        class="shrink-0 border-l border-neutral-800 bg-neutral-900 transition-[width] duration-200 ease-in-out"
+        [style.width]="playerWidth + 'px'"
+      >
+        <app-player (widthChanged)="playerWidth = $event"></app-player>
+      </div>
+
+    </div>
+  </div>
+
+</div>
