@@ -26,3 +26,4 @@ Route::middleware('auth:sanctum')->get('/user', [AuthController::class, 'me']);
 Route::get('/users/{username}', [UserController::class, 'showByUsername']);
 
 Route::get('/tracks', [TrackController::class, 'index']);
+Route::get('/stream/{type}/{filename}', [TrackController::class, 'streamFile']);
