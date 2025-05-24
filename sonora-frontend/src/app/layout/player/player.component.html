@@ -79,6 +79,50 @@
     </div>
 
 
+    <div class="flex items-center gap-2 mb-3">
+      <label class="text-sm font-semibold">Stems režīms</label>
+      <input type="checkbox" [(ngModel)]="isStemsMode" (change)="onStemsToggle()" />
+    </div>
+
+
+    <!-- Stem ceļu kontrole -->
+    <div class="mt-6">
+      <p class="text-sm font-semibold mb-2">Stems skaļuma kontrole:</p>
+
+      <div *ngIf="stems.length > 0; else noStems" class="flex flex-col gap-3">
+        <div *ngFor="let stem of stems" class="flex items-center gap-4">
+          <span class="capitalize w-20">{{ stem.type }}</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            [value]="stemVolumes[stem.type]"
+            (input)="onStemVolumeChange(stem.type, $event)"
+            (change)="onStemVolumeChangeEnd(stem.type)"
+            class="w-full appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"
+          />
+
+
+
+        </div>
+      </div>
+
+      <ng-template #noStems>
+        <p class="text-neutral-500 text-sm">Šim ierakstam nav pieejamas stem celiņi.</p>
+      </ng-template>
+    </div>
+
+
+    <!-- stems elementi -->
+    <audio
+      *ngFor="let stem of stems"
+      #stemAudioRef
+      [attr.data-type]="stem.type"
+      [src]="stem.url"
+      preload="auto"
+    ></audio>
+
     <!-- Hidden audio -->
     <audio #audioRef [src]="currentTrack?.audio_file" (ended)="onEnded()"></audio>
   </div>

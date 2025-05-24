@@ -10,17 +10,25 @@ class TrackController extends Controller
 {
     public function index()
     {
-        $tracks = \App\Models\Track::with('activeVersion')->get();
+        // Ielādē gan aktīvo versiju, gan tās stems
+        $tracks = Track::with('activeVersion.stems')->get();
 
         return response()->json($tracks->map(function ($track) {
+            $version = $track->activeVersion;
+
             return [
                 'id' => $track->id,
                 'title' => $track->title,
-//                'artist_name' => $track->user->display_name ?? $track->user->username,
                 'cover_image' => $track->cover_image ? asset('storage/' . $track->cover_image) : null,
-                'audio_file' => $track->activeVersion?->audio_file
-                    ? url('api/stream/track/' . basename($track->activeVersion->audio_file))
+                'audio_file' => $version?->audio_file
+                    ? url('api/stream/track/' . basename($version->audio_file))
                     : null,
+                'stems' => $version?->stems?->map(function ($stem) use ($version) {
+                        return [
+                            'type' => $stem->stem_type,
+                            'url' => url('api/stream/stems/track_' . $version->id . '/' . basename($stem->audio_file)),
+                        ];
+                    })->values() ?? [],
             ];
         }));
     }
@@ -50,4 +58,26 @@ class TrackController extends Controller
             'Cache-Control' => 'no-cache',
         ]);
     }
+
+    public function streamStem($version_id, $filename)
+    {
+        $folder = "track_" . intval($version_id);
+        $path = storage_path("app/public/stems/{$folder}/{$filename}");
+
+        if (!file_exists($path)) {
+            abort(404, 'Stems file not found.');
+        }
+
+        return response()->stream(function () use ($path) {
+            $stream = fopen($path, 'rb');
+            fpassthru($stream);
+            fclose($stream);
+        }, 200, [
+            'Content-Type' => 'audio/mpeg',
+            'Content-Length' => filesize($path),
+            'Accept-Ranges' => 'bytes',
+            'Cache-Control' => 'no-cache',
+        ]);
+    }
+
 }

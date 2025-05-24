@@ -3,11 +3,11 @@ import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class TrackService {
-  private apiUrl = 'http://localhost:8000/api';
+  private apiUrl = '/api';
 
   constructor(private http: HttpClient) {}
 
   getAllTracks() {
-    return this.http.get<any[]>(`${this.apiUrl}/tracks`);
+    return this.http.get<any[]>(`${this.apiUrl}/tracks`, { withCredentials: true });
   }
 }

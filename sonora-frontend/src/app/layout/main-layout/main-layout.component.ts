@@ -17,7 +17,7 @@ export class MainLayoutComponent implements OnInit {
     const sidebarStored = localStorage.getItem('sidebarCollapsed');
     this.isSidebarCollapsed = sidebarStored === 'true';
 
-    // Если сайдбар скрыт, установить меньшую ширину
+    // Ja sidebar ir slēpts, iestatajam mazāku platumu
     this.sidebarWidth = this.isSidebarCollapsed ? 96 : 315;
   }
 

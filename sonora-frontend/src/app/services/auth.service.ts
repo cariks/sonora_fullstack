@@ -6,7 +6,7 @@ import { catchError, tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private api = 'http://localhost:8000';
+  private api = '';
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
@@ -18,7 +18,7 @@ export class AuthService {
 
   login(data: { email: string; password: string }) {
     return this.http.post(`${this.api}/api/login`, data, { withCredentials: true }).pipe(
-      tap(() => this.fetchUser()) // сразу получаем и сохраняем пользователя
+      tap(() => this.fetchUser()) // nekavējoties iegūstam un saglabājam lietotāju
     );
   }
 
@@ -33,7 +33,7 @@ export class AuthService {
       tap(user => this.currentUserSubject.next(user)),
       catchError(() => {
         this.currentUserSubject.next(null);
-        return of(null); // return observable
+        return of(null); // atgriezt observable
       })
     );
   }
@@ -48,7 +48,7 @@ export class AuthService {
     );
   }
 
-  // Загружается один раз, например при запуске приложения
+  // ielādē vienu reizi, piemēram uz startu
   initUser() {
     this.fetchUser();
   }

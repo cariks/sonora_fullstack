@@ -69,7 +69,8 @@
               "browserTarget": "sonora-frontend:build:production"
             },
             "development": {
-              "browserTarget": "sonora-frontend:build:development"
+              "browserTarget": "sonora-frontend:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"

@@ -2,6 +2,12 @@
 import { Component, ElementRef, EventEmitter, HostListener, Output, ViewChild } from '@angular/core';
 import { PlayerService } from '../../services/player.service';
 import { Subscription } from 'rxjs';
+import { StemsMixerService } from '../../services/stems-mixer.service';
+import { ViewChildren, QueryList } from '@angular/core';
+import {error} from "@angular/compiler-cli/src/transformers/util";
+import { ChangeDetectorRef } from '@angular/core';
+
+
 
 // Komponents, kas atbild par mūzikas atskaņošanu un playera interfeisu
 @Component({
@@ -12,13 +18,18 @@ import { Subscription } from 'rxjs';
 export class PlayerComponent {
   @ViewChild('audioRef') audioElement!: ElementRef<HTMLAudioElement>; // Atsauce uz audio HTML elementu
   @Output() widthChanged = new EventEmitter<number>(); // Lai paziņotu par playera platuma izmaiņām
+  @ViewChildren('stemAudioRef') stemAudioElements!: QueryList<ElementRef<HTMLAudioElement>>;
+
 
   // Abonementi priekš strāvojošo datu plūsmām
   private trackSub!: Subscription;
   private playbackSub!: Subscription;
   private timeSub!: Subscription;
 
-  constructor(private playerService: PlayerService) {}
+  constructor(private playerService: PlayerService,
+              private stemsMixerService: StemsMixerService,
+              private cdr: ChangeDetectorRef,
+  ) {}
 
   // Lietotāja stāvokļa mainīgie
   isSeeking = false; // Norāda, vai lietotājs velk laika joslu
@@ -32,38 +43,21 @@ export class PlayerComponent {
 
   fadeInterval: any = null;
 
-  fadeOut(audio: HTMLAudioElement, callback: () => void) {
-    if (this.fadeInterval) clearInterval(this.fadeInterval);
 
-    const step = 0.05; // how much volume decreases each frame
-    const speed = 20; // interval in ms
-    this.fadeInterval = setInterval(() => {
-      if (audio.volume > step) {
-        audio.volume -= step;
-      } else {
-        audio.volume = 0;
-        clearInterval(this.fadeInterval);
-        callback();
-      }
-    }, speed);
-  }
+  isStemsMode = false;
+  stems: { type: string, url: string }[] = [];
+  stemVolumes: { [key: string]: number } = {
+    bass: 0.5,
+    drums: 0.5,
+    melody: 0.5,
+    vocals: 0.5
+  };
+  private stemVolumeUpdateTimeouts: { [key: string]: any } = {};
+  private stemFadeVolume = 0.5;
+  private stemsToggleInProgress = false;
+  private stemsNeedInit = false; // Vai ir vajadziga stems atksanosana pec Render
+  mixerSettingsLoaded = false;
 
-  fadeIn(audio: HTMLAudioElement, targetVolume: number) {
-    if (this.fadeInterval) clearInterval(this.fadeInterval);
-
-    const step = 0.05;
-    const speed = 20;
-    audio.volume = 0;
-
-    this.fadeInterval = setInterval(() => {
-      if (audio.volume + step < targetVolume) {
-        audio.volume += step;
-      } else {
-        audio.volume = targetVolume;
-        clearInterval(this.fadeInterval);
-      }
-    }, speed);
-  }
 
 
   // Atskaņotāja izmēru mainīgie
@@ -75,6 +69,8 @@ export class PlayerComponent {
   bounceClass = '';
   resizeThrottle = false;
 
+
+
   // Iniciē komponenti un abonē nepieciešamos datus no servisa
   ngOnInit() {
     // Mēģina nolasīt saglabāto atskaņotāja platumu no pārlūka lokālās atmiņas
@@ -84,42 +80,40 @@ export class PlayerComponent {
     // Ja platums nav saglabāts, tiek izmantots noklusētais platums
     this.emitWidth();
 
+    this.trackSub = this.playerService.currentTrack$.subscribe(track => {
+      if (track) {
+        this.currentTrack = track;
+        this.stems = track.stems || []; // Ielādē stems, ja tādi ir
+        this.playTrack();
+      }
+    });
+
+    this.stemsMixerService.getMixerSettings().subscribe(settings => {
+      if (!this.mixerSettingsLoaded) {
+        this.mixerSettingsLoaded = true;
+        this.isStemsMode = settings.is_stems_mode;
+
+        this.stemVolumes = {
+          bass: settings.bass_level ?? 0.5,
+          drums: settings.drums_level ?? 0.5,
+          melody: settings.melody_level ?? 0.5,
+          vocals: settings.vocals_level ?? 0.5
+        };
+      }
+    });
+
+
     const storedVolume = localStorage.getItem('playerVolume');
     this.volume = storedVolume ? +storedVolume : 1;
 
 
-    // Kad tiek mainīta dziesma - ielādē jauno
-    this.trackSub = this.playerService.currentTrack$.subscribe(track => {
-      if (track) {
-        this.currentTrack = track; // Atjauno komponentes lokālo dziesmas stāvokli
-        this.playTrack(); // Pārslēdz audio failu atskaņošanai
-      }
-    });
 
     // Atskaņošanas statusa maiņa
     this.playbackSub = this.playerService.isPlaying$.subscribe(playing => {
-      const audio = this.audioElement.nativeElement;
-      this.isPlaying = playing; // Atjauno lokālo mainīgo
-
-      if (playing) {
-        if (audio.readyState >= 3) {
-          // Pārbaude: ja dziesma ir no sākuma - atskaņot to uzreiz (bez fadein)
-          if (Math.floor(audio.currentTime) === 0) {
-            audio.volume = this.volume;
-            audio.play();
-          } else {
-            audio.play().then(() => {
-              this.fadeIn(audio, this.volume);
-            });
-          }
-        }
-      } else {
-        this.fadeOut(audio, () => {
-          audio.pause();
-        });
-      }
-
+      this.isPlaying = playing;
+      this.syncPlaybackState();
     });
+
 
     // Sinhronizē globālo laiku
     this.timeSub = this.playerService.currentTime$.subscribe((time) => {
@@ -133,24 +127,41 @@ export class PlayerComponent {
 
     const audio = this.audioElement.nativeElement;
 
-    // Kad ir pieejama informācija par ilgumu
     audio.addEventListener('loadedmetadata', () => {
       this.duration = audio.duration;
     });
 
-    // Laika atjaunošana reālajā laikā
-    audio.addEventListener('timeupdate', () => {
-      if (!this.isSeeking) { // Tikai tad, ja lietotājs nevelk laika joslu
-        this.currentTime = audio.currentTime;
-        this.playerService.setCurrentTime(audio.currentTime); // Sinhronizē ar servisu
-      }
-    });
 
-    // Kad dziesma beidzas
+    this.setupTimeTracking();
+
     audio.addEventListener('ended', () => {
       this.onEnded();
     });
   }
+
+  private setupTimeTracking() {
+    const audio = this.audioElement.nativeElement;
+
+    audio.addEventListener('timeupdate', () => {
+      if (this.isStemsMode) return;
+      if (!this.isSeeking) {
+        this.currentTime = audio.currentTime;
+        this.playerService.setCurrentTime(this.currentTime);
+      }
+    });
+
+    setInterval(() => {
+      if (this.isStemsMode && !this.isSeeking && this.isPlaying && this.stemAudioElements.length > 0) {
+        const mainStem = this.stemAudioElements.first?.nativeElement;
+        if (mainStem) {
+          this.currentTime = mainStem.currentTime;
+          this.playerService.setCurrentTime(this.currentTime);
+        }
+      }
+    }, 250);
+  }
+
+
 
   // Atbrīvo resursus
   ngOnDestroy() {
@@ -161,30 +172,101 @@ export class PlayerComponent {
 
   // Atskaņo pašreizējo dziesmu no saglabātā laika
   playTrack() {
-    const audio = this.audioElement.nativeElement;
     this.isPlaying = false;
+    const audio = this.audioElement.nativeElement;
 
-    // Klausas kad audio var tikt atskaņots bez pauzem
-    const canPlayHandler = () => {
-      const savedTime = this.playerService.getCurrentTime();
-      // Ja netiek veikta manuāla laika vilkšana, tad pārlēkt uz saglabāto laiku
-      if (!this.isSeeking && savedTime > 0) {
-        audio.currentTime = savedTime;
-      }
-      // Ja statusa ir "spelet", tad uzsakt atskaņošanu
-      if (this.playerService.getIsPlaying()) {
-        audio.play();
-      }
+    if (!this.isStemsMode) {
+      const canPlayHandler = () => {
+        const savedTime = this.playerService.getCurrentTime();
+        if (!this.isSeeking && savedTime > 0) {
+          audio.currentTime = savedTime;
+        }
 
-      audio.removeEventListener('canplaythrough', canPlayHandler);
-    };
+        if (this.playerService.getIsPlaying()) {
+          audio.play();
+        }
 
-    audio.addEventListener('canplaythrough', canPlayHandler);
+        audio.removeEventListener('canplaythrough', canPlayHandler);
+      };
+
+      audio.addEventListener('canplaythrough', canPlayHandler);
+    } else {
+      this.stemsNeedInit = true;
+      this.cdr.detectChanges();
+    }
   }
+
+  ngAfterViewChecked() {
+    if (this.stemsNeedInit && this.stemAudioElements.length > 0) {
+      this.stemsNeedInit = false;
+      this.initStemsPlayback();
+    }
+  }
+
+  private initStemsPlayback() {
+    this.waitForAllStemsToLoad().then(() => {
+      const currentTime = this.currentTime;
+      this.stemAudioElements.forEach(ref => {
+        const el = ref.nativeElement;
+        el.currentTime = currentTime;
+        const type = el.dataset['type'] ?? '';
+        el.volume = this.stemVolumes[type] ?? 0.5;
+      });
+
+      this.syncPlaybackState();
+    });
+  }
+
+  private syncPlaybackState() {
+    const isPlaying = this.playerService.getIsPlaying();
+
+    if (this.isStemsMode) {
+      this.stemAudioElements.forEach(ref => {
+        const el = ref.nativeElement;
+        if (isPlaying) {
+          el.play().catch(() => {});
+        } else {
+          el.pause();
+        }
+      });
+    } else {
+      const audio = this.audioElement.nativeElement;
+      if (isPlaying) {
+        audio.play().catch(() => {});
+      } else {
+        audio.pause();
+      }
+    }
+  }
+
+
+
+  private waitForAllStemsToLoad(): Promise<void> {
+    const elements = this.stemAudioElements.toArray().map(ref => ref.nativeElement);
+
+    const promises = elements.map(el => {
+      return new Promise<void>((resolve) => {
+        if (el.readyState >= 3) {
+          resolve();
+        } else {
+          const onReady = () => {
+            el.removeEventListener('canplaythrough', onReady);
+            resolve();
+          };
+          el.addEventListener('canplaythrough', onReady);
+        }
+      });
+    });
+
+    return Promise.all(promises).then(() => {});
+  }
+
+
+
+
 
   setVolume(value: number) {
     this.volume = value;
-
     const audio = this.audioElement.nativeElement;
     audio.volume = value;
 
@@ -196,7 +278,6 @@ export class PlayerComponent {
     const value = +input.value;
     this.setVolume(value);
   }
-
 
   // Start/stop
   togglePlay() {
@@ -211,22 +292,48 @@ export class PlayerComponent {
 
   // Lietotājs atlaiž slīdni, fiksē laiku
   onSeekEnd() {
-    const audio = this.audioElement.nativeElement;
-    // Ja audio vēl nav pilnībā ielādēts, tad jāgaida 'loadedmetadata'
-    if (audio.readyState < 1) {
-      const waitForReady = () => {
-        audio.currentTime = this.currentTime;
-        this.playerService.setCurrentTime(this.currentTime);
-        audio.removeEventListener('loadedmetadata', waitForReady);
-      };
-      audio.addEventListener('loadedmetadata', waitForReady);
-    } else { // Ja jau ir gatavs — pārlēkt uz norādīto vietu
-      audio.currentTime = this.currentTime;
-      this.playerService.setCurrentTime(this.currentTime);
-    }
+    this.isSeeking = false;
+    this.playerService.setCurrentTime(this.currentTime);
 
-    this.isSeeking = false; // Atslēdz "vilkšanas režīmu"
+    if (this.isStemsMode) {
+      // Ставим паузу всем дорожкам
+      this.stemAudioElements.forEach(ref => {
+        ref.nativeElement.pause();
+      });
+
+      // Обновляем позиции
+      this.stemAudioElements.forEach(ref => {
+        ref.nativeElement.currentTime = this.currentTime;
+      });
+
+      // Дожидаемся полной готовности всех stems
+      this.waitForAllStemsToLoad().then(() => {
+        if (this.playerService.getIsPlaying()) {
+          this.stemAudioElements.forEach(ref => {
+            ref.nativeElement.play().catch(() => {});
+          });
+        }
+      });
+    } else {
+      const audio = this.audioElement.nativeElement;
+
+      if (audio.readyState < 1) {
+        const waitForReady = () => {
+          audio.currentTime = this.currentTime;
+          audio.removeEventListener('loadedmetadata', waitForReady);
+        };
+        audio.addEventListener('loadedmetadata', waitForReady);
+      } else {
+        audio.currentTime = this.currentTime;
+      }
+
+      if (this.playerService.getIsPlaying()) {
+        audio.play().catch(() => {});
+      }
+    }
   }
+
+
 
   // Formatē laiku sekundes uz MM:SS
   formatTime(time: number): string {
@@ -235,12 +342,138 @@ export class PlayerComponent {
     return `${minutes}:${seconds}`;
   }
 
+  fadeOut(audio: HTMLAudioElement, callback: () => void) {
+    if (this.fadeInterval) clearInterval(this.fadeInterval);
+
+    const step = 0.01;
+    const speed = 15;
+    this.fadeInterval = setInterval(() => {
+      if (audio.volume > step) {
+        audio.volume -= step;
+      } else {
+        audio.volume = 0;
+        clearInterval(this.fadeInterval);
+        callback();
+      }
+    }, speed);
+  }
+
+  fadeInStem(audio: HTMLAudioElement, targetVolume: number) {
+    let volume = 0;
+    audio.volume = 0;
+
+    const step = 0.1;
+    const speed = 15;
+
+    const interval = setInterval(() => {
+      volume += step;
+      if (volume < targetVolume) {
+        audio.volume = volume;
+      } else {
+        audio.volume = targetVolume;
+        clearInterval(interval);
+      }
+    }, speed);
+  }
+
+
   // Tiek izsaukts kad dziesma ir beigusies
   onEnded() {
     this.isPlaying = false; // Statuss = beigts
     this.currentTime = 0;
     this.playerService.setCurrentTime(0); // Informē servisu
   }
+
+  onStemsToggle() {
+    if (this.stemsToggleInProgress) return;
+    this.stemsToggleInProgress = true;
+
+    const newMode = this.isStemsMode; // уже изменено через ngModel!
+    const isPlaying = this.playerService.getIsPlaying();
+    const audio = this.audioElement.nativeElement;
+
+    this.stemsMixerService.updateMixerSettings({ is_stems_mode: !!newMode }).subscribe({
+      next: () => {
+        this.stemsToggleInProgress = false;
+
+        if (newMode) {
+          const transitionTime = audio.currentTime;
+
+          this.waitForAllStemsToLoad().then(() => {
+
+            if (isPlaying) {
+
+              this.fadeOut(audio, () => {
+                audio.pause();
+              });
+
+              this.stemAudioElements.forEach((ref, index) => {
+                const el = ref.nativeElement;
+                const type = el.dataset['type'] ?? '';
+                const targetVolume = this.stemVolumes[type] ?? 0.5;
+
+                el.currentTime = transitionTime;
+                el.volume = 0;
+
+                setTimeout(() => {
+                  el.play().catch(() => {});
+                  this.fadeInStem(el, targetVolume);
+                }, 1);
+
+
+              });
+            }
+
+          });
+        } else {
+
+          this.stemAudioElements.forEach(ref => {
+            this.fadeOut(ref.nativeElement, () => {
+              ref.nativeElement.pause();
+            });
+          });
+
+          const audio = this.audioElement.nativeElement;
+          audio.currentTime = this.currentTime;
+
+          if (isPlaying) {
+            audio.volume = 0;
+            audio.play().then(() => {
+              this.fadeInStem(audio, this.volume);
+            });
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Update failed:', err);
+        this.stemsToggleInProgress = false;
+      }
+    });
+  }
+
+
+
+
+
+  onStemVolumeChange(type: string, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = +input.value;
+
+    this.stemVolumes[type] = value;
+
+    const audioRef = this.stemAudioElements.find(ref =>
+      ref.nativeElement.dataset['type'] === type
+    );
+    if (audioRef) {
+      audioRef.nativeElement.volume = value;
+    }
+  }
+
+  onStemVolumeChangeEnd(type: string) {
+    const value = this.stemVolumes[type];
+    this.stemsMixerService.updateMixerSettings({ [`${type}_level`]: value }).subscribe();
+  }
+
 
   // Atskaņotāja izmēru maiņa
 
@@ -249,6 +482,7 @@ export class PlayerComponent {
     event.preventDefault();
     document.body.classList.add('no-transition'); // Pievieno CSS klasi, lai izslēgtu animācijas vilkšanas laikā
   }
+
 
 // Atgriež atskaņotāja platumu uz noklusēto vērtību
   onResizeReset() {

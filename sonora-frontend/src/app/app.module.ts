@@ -18,6 +18,8 @@ import { SettingsComponent } from './pages/settings/settings.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { UserProfileComponent } from './pages/user-profile/user-profile.component';
 import { ImageSequenceComponent } from './components/image-sequence/image-sequence.component';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
 
 
 @NgModule({
@@ -35,7 +37,7 @@ import { ImageSequenceComponent } from './components/image-sequence/image-sequen
     MySongsComponent,
     SettingsComponent,
     UserProfileComponent,
-    ImageSequenceComponent,
+    ImageSequenceComponent
 
   ],
   imports: [
@@ -46,7 +48,13 @@ import { ImageSequenceComponent } from './components/image-sequence/image-sequen
     BrowserAnimationsModule,
 
   ],
-  providers: [],
+  providers: [
+    {
+    provide: HTTP_INTERCEPTORS,
+    useClass: AuthInterceptor,
+    multi: true
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

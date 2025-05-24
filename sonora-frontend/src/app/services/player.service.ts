@@ -31,7 +31,7 @@ export class PlayerService {
     return this.isPlayingSubject.value;
   }
 
-  // === NEW: time handling ===
+  //
 
   getCurrentTime(): number {
     return this.currentTimeSubject.value;
