@@ -51,9 +51,6 @@
         (input)="onVolumeInput($event)"
         class="flex-1 appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"
       />
-
-
-
       <i class="fas fa-volume-up text-neutral-400 text-sm"></i>
     </div>
 
@@ -65,7 +62,7 @@
         type="range"
         min="0"
         [max]="duration"
-        [(ngModel)]="currentTime"
+        [value]="currentTime"
         (input)="seek($event)"
         (change)="onSeekEnd()"
         (mousedown)="isSeeking = true"
@@ -79,9 +76,22 @@
     </div>
 
 
+
     <div class="flex items-center gap-2 mb-3">
       <label class="text-sm font-semibold">Stems režīms</label>
-      <input type="checkbox" [(ngModel)]="isStemsMode" (change)="onStemsToggle()" />
+
+      <mat-slide-toggle
+        [checked]="isStemsMode"
+        [disabled]="isToggleBlocked"
+        (change)="onStemsToggle()"
+        class="stems-toggle"
+      >
+        <span class="text-sm font-semibold text-white">Stems režīms</span>
+      </mat-slide-toggle>
+
+
+
+
     </div>
 
 
@@ -124,6 +134,7 @@
     ></audio>
 
     <!-- Hidden audio -->
-    <audio #audioRef [src]="currentTrack?.audio_file" (ended)="onEnded()"></audio>
+    <audio #audioRef [src]="currentTrack?.audio_file" preload="auto" controlsList="nodownload" disableRemotePlayback></audio>
+
   </div>
 </div>

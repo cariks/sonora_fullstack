@@ -20,6 +20,7 @@ import { UserProfileComponent } from './pages/user-profile/user-profile.componen
 import { ImageSequenceComponent } from './components/image-sequence/image-sequence.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 
 @NgModule({
@@ -37,7 +38,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
     MySongsComponent,
     SettingsComponent,
     UserProfileComponent,
-    ImageSequenceComponent
+    ImageSequenceComponent,
 
   ],
   imports: [
@@ -46,6 +47,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
     HttpClientModule,
     FormsModule,
     BrowserAnimationsModule,
+    MatSlideToggleModule,
 
   ],
   providers: [
