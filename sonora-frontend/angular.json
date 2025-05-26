@@ -66,11 +66,11 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "sonora-frontend:build:production"
+              "buildTarget": "sonora-frontend:build:production"
             },
             "development": {
-              "browserTarget": "sonora-frontend:build:development",
-              "proxyConfig": "proxy.conf.json"
+              "proxyConfig": "proxy.conf.json",
+              "buildTarget": "sonora-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -78,7 +78,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "sonora-frontend:build"
+            "buildTarget": "sonora-frontend:build"
           }
         },
         "test": {
