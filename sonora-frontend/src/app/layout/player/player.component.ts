@@ -5,12 +5,15 @@ import { Subscription } from 'rxjs';
 import { StemsMixerService } from '../../services/stems-mixer.service';
 import { ViewChildren, QueryList } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+
 
 // Komponents, kas atbild par mūzikas atskaņošanu un playera interfeisu
 @Component({
   selector: 'app-player',
   templateUrl: './player.component.html',
-  styleUrls: ['./player.component.scss']
+  styleUrls: ['./player.component.scss'],
+
 })
 export class PlayerComponent {
   @ViewChild('audioRef') audioElement!: ElementRef<HTMLAudioElement>;
