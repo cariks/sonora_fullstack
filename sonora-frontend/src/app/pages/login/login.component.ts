@@ -1,6 +1,5 @@
-import { Component } from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -8,14 +7,15 @@ import { Router } from '@angular/router';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
+  @Input() loading: boolean = false;
+  @Output() success = new EventEmitter<void>();
+
   email = '';
   password = '';
   error: string | null = null;
-
   rememberMe = false;
 
-  constructor(private auth: AuthService, private router: Router) {
-  }
+  constructor(private auth: AuthService) {}
 
   login() {
     this.auth.getCsrfToken().subscribe(() => {
@@ -28,10 +28,10 @@ export class LoginComponent {
           }
 
           this.auth.fetchUser().subscribe(() => {
-            this.router.navigate(['/']);
+            this.success.emit();
           });
         },
-        error: (err) => {
+        error: () => {
           this.error = 'Nepareizs epasts vai parole';
         }
       });

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import {BehaviorSubject, Observable, switchMap} from 'rxjs';
 import { of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
@@ -18,9 +18,11 @@ export class AuthService {
 
   login(data: { email: string; password: string }) {
     return this.http.post(`${this.api}/api/login`, data, { withCredentials: true }).pipe(
-      tap(() => this.fetchUser()) // nekavējoties iegūstam un saglabājam lietotāju
+      switchMap(() => this.fetchUser()) // gaidam
     );
   }
+
+
 
   logout() {
     return this.http.post(`${this.api}/api/logout`, {}, { withCredentials: true }).pipe(
@@ -42,11 +44,7 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
-  getUser() {
-    return this.http.get(`${this.api}/api/user`, { withCredentials: true }).pipe(
-      tap(user => this.currentUserSubject.next(user))
-    );
-  }
+
 
   // ielādē vienu reizi, piemēram uz startu
   initUser() {

@@ -4,6 +4,10 @@ import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './pages/login/login.component';
+import { RegisterComponent } from './pages/register/register.component';
+import { AuthPageComponent } from './pages/auth-page/auth-page.component';
+
+
 import { FormsModule } from '@angular/forms';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
@@ -40,6 +44,8 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     SettingsComponent,
     UserProfileComponent,
     ImageSequenceComponent,
+    RegisterComponent,
+    AuthPageComponent,
 
   ],
   imports: [
@@ -49,6 +55,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     FormsModule,
     BrowserAnimationsModule,
     MatSlideToggleModule,
+
 
   ],
   providers: [

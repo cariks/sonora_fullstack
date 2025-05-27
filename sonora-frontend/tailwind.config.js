@@ -6,7 +6,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Manrope', 'sans-serif'],
+        sf: ['"SF Pro Display"', 'sans-serif']
       },
     },
   },

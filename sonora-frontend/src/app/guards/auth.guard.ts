@@ -12,9 +12,17 @@ export class AuthGuard implements CanActivate {
   constructor(private auth: AuthService, private router: Router) {}
 
   canActivate(): Observable<boolean | UrlTree> {
-    return this.auth.getUser().pipe(
-      map(() => true),
-      catchError(() => of(this.router.createUrlTree(['/login'])))
+    // Ja lietotājs jau ir saglabāts - let go
+    const user = this.auth.getCurrentUser();
+    if (user) {
+      return of(true);
+    }
+
+    // Pretējā gadījumā - pieprasijums
+    return this.auth.fetchUser().pipe(
+      map((user) => !!user || this.router.createUrlTree(['/auth-page'])),
+      catchError(() => of(this.router.createUrlTree(['/auth-page'])))
     );
   }
+
 }

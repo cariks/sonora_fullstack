@@ -11,7 +11,8 @@ class TrackController extends Controller
     public function index()
     {
         // Ielādē gan aktīvo versiju, gan tās stems
-        $tracks = Track::with('activeVersion.stems')->get();
+        $tracks = Track::with(['activeVersion.stems', 'activeVersion', 'user'])->get();
+
 
         return response()->json($tracks->map(function ($track) {
             $version = $track->activeVersion;
@@ -29,7 +30,13 @@ class TrackController extends Controller
                             'url' => url('api/stream/stems/track_' . $version->id . '/' . basename($stem->audio_file)),
                         ];
                     })->values() ?? [],
+                // informacija
+                'artist_name' => $track->user?->name ?? 'Nezināms',
+                'key' => $version?->key,
+                'bpm' => $version?->bpm,
+                'lyrics' => $version?->lyrics_visible ? $version->lyrics : null,
             ];
+
         }));
     }
 

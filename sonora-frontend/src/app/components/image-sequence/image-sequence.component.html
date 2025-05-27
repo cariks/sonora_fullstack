@@ -1,8 +1,8 @@
 <div
-  class="w-full h-full transition-all duration-[1500ms] ease-[cubic-bezier(0.19,1,0.22,1)]"
+  class="w-full h-full transition-transform duration-[1700ms] ease-linear"
   [ngClass]="{
-    'opacity-0 blur-xl scale-[105%]': !ready,
-    'opacity-100 blur-0 scale-100': ready
+
+    'translate-x-[10%]': slideOut
   }"
 >
   <img

@@ -5,15 +5,12 @@ import { Subscription } from 'rxjs';
 import { StemsMixerService } from '../../services/stems-mixer.service';
 import { ViewChildren, QueryList } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-
 
 // Komponents, kas atbild par mūzikas atskaņošanu un playera interfeisu
 @Component({
   selector: 'app-player',
   templateUrl: './player.component.html',
-  styleUrls: ['./player.component.scss'],
-
+  styleUrls: ['./player.component.scss']
 })
 export class PlayerComponent {
   @ViewChild('audioRef') audioElement!: ElementRef<HTMLAudioElement>;
@@ -42,13 +39,21 @@ export class PlayerComponent {
   private playbackSub!: Subscription;
   private timeSub!: Subscription;
   private needsSync = false;
+  private stemVolumeTimers: { [key: string]: any } = {};
+  private mainVolumeTimer: any = null;
+
+
+  private activeFadeTimers: Map<HTMLAudioElement, any> = new Map();
 
   private fadeVolume(
     element: HTMLAudioElement,
     from: number,
     to: number,
-    duration: number = 300
+    duration: number = 500
   ) {
+    const existingTimer = this.activeFadeTimers.get(element);
+    if (existingTimer) clearInterval(existingTimer);
+
     const steps = 30;
     const stepDuration = duration / steps;
     const delta = (to - from) / steps;
@@ -56,17 +61,20 @@ export class PlayerComponent {
     let current = from;
     let step = 0;
 
-    const interval = setInterval(() => {
+    const timer = setInterval(() => {
       step++;
       current += delta;
       element.volume = Math.max(0, Math.min(current, 1));
-
       if (step >= steps) {
         element.volume = to;
-        clearInterval(interval);
+        clearInterval(timer);
+        this.activeFadeTimers.delete(element);
       }
     }, stepDuration);
+
+    this.activeFadeTimers.set(element, timer);
   }
+
 
 
 
@@ -84,7 +92,7 @@ export class PlayerComponent {
     private cdr: ChangeDetectorRef
   ) {}
 
-  // Inicializācija
+  // Inicializācija, Angular dzīves cikls / subscriptions
   ngOnInit() {
     this.playerWidth = +localStorage.getItem('playerWidth')! || this.defaultWidth;
     this.emitWidth();
@@ -98,16 +106,15 @@ export class PlayerComponent {
     });
 
     this.stemsMixerService.getMixerSettings().subscribe(settings => {
-      if (!this.mixerSettingsLoaded) {
-        this.mixerSettingsLoaded = true;
-        this.isStemsMode = settings.is_stems_mode;
-        this.stemVolumes = {
-          bass: settings.bass_level ?? 0.5,
-          drums: settings.drums_level ?? 0.5,
-          melody: settings.melody_level ?? 0.5,
-          vocals: settings.vocals_level ?? 0.5
-        };
-      }
+      this.mixerSettingsLoaded = true;
+      this.isStemsMode = settings.is_stems_mode;
+      this.stemVolumes = {
+        bass: settings.bass_level ?? 0.5,
+        drums: settings.drums_level ?? 0.5,
+        melody: settings.melody_level ?? 0.5,
+        vocals: settings.vocals_level ?? 0.5
+      };
+      this.cdr.detectChanges();
     });
 
     const storedVolume = localStorage.getItem('playerVolume');
@@ -136,10 +143,101 @@ export class PlayerComponent {
   }
 
   ngAfterViewChecked() {
-    if (this.needsSync && this.audioElement && this.stemAudioElements.length >= this.stems.length) {
+    if (this.needsSync && this.areAllAudioElementsReady()) {
       this.needsSync = false;
-      this.syncPlaybackState(); // playAll
+      this.syncPlaybackState();
     }
+  }
+
+
+
+  // Pamatfunkcionalitāte atskaņošanai
+
+  // Atskaņo jaunu celiņu
+  playTrack() {
+    this.syncPlaybackState();
+  }
+
+  // Sinhronizē atskaņošanas stāvokli
+  private syncPlaybackState() {
+    const isPlaying = this.playerService.getIsPlaying();
+    if (isPlaying) {
+      this.playAll();
+    } else {
+      this.pauseAll();
+    }
+  }
+
+  // Apstādina visus audio elementus
+  private pauseAll(): void {
+    this.audioElement.nativeElement.pause();
+    this.stemAudioElements.forEach(ref => ref.nativeElement.pause());
+  }
+
+  // Atskaņo visus audio elementus sinhroni
+  private async playAll(): Promise<void> {
+    if (!this.mixerSettingsLoaded) {
+      console.warn('Mixer settings not loaded yet');
+      return;
+    }
+    if (!this.currentTrack) return;
+
+    try {
+
+
+      this.updateInitialVolumes();
+
+      await this.waitForAllAudioToBeReady();
+
+      const syncTime = this.currentTime;
+      this.audioElement.nativeElement.currentTime = syncTime;
+      this.stemAudioElements.forEach(ref => {
+        ref.nativeElement.currentTime = syncTime;
+      });
+
+      this.applyFinalVolumeSettings();
+
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      const playPromises = [
+        this.audioElement.nativeElement.play().catch(e => console.warn('Main play error:', e)),
+        ...this.stemAudioElements.map(ref =>
+          ref.nativeElement.play().catch(e => console.warn('Stem play error:', e)))
+      ];
+
+      await Promise.all(playPromises);
+
+    } catch (e) {
+      console.error('PlayAll error:', e);
+    }
+  }
+
+  private waitForAllAudioToBeReady(): Promise<void> {
+    const audioElements: HTMLAudioElement[] = [
+      this.audioElement.nativeElement,
+      ...this.stemAudioElements.map(ref => ref.nativeElement)
+    ];
+
+    const readinessPromises = audioElements.map(el => {
+      return new Promise<void>((resolve) => {
+        if (el.readyState >= 3) {
+          resolve();
+        } else {
+          el.addEventListener('canplaythrough', () => resolve(), { once: true });
+        }
+      });
+    });
+
+    return Promise.all(readinessPromises).then(() => {});
+  }
+
+  private areAllAudioElementsReady(): boolean {
+    if (!this.audioElement?.nativeElement) return false;
+    if (this.stemAudioElements.length !== this.stems.length) return false;
+
+    return this.stemAudioElements.toArray().every(ref =>
+      ref.nativeElement.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA
+    );
   }
 
   // Sekojam atskaņošanas pozīcijai
@@ -162,205 +260,29 @@ export class PlayerComponent {
     }, 250);
   }
 
-  private waitForAllAudioToBeReady(): Promise<void> {
-    const audioElements: HTMLAudioElement[] = [
-      this.audioElement.nativeElement,
-      ...this.stemAudioElements.map(ref => ref.nativeElement)
-    ];
-
-    const readinessPromises = audioElements.map(el => {
-      return new Promise<void>((resolve) => {
-        if (el.readyState >= 3) {
-          resolve();
-        } else {
-          el.addEventListener('canplaythrough', () => resolve(), { once: true });
-        }
-      });
-    });
-
-    return Promise.all(readinessPromises).then(() => {});
-  }
-
-
-  // Atskaņo jaunu celiņu
-  playTrack() {
-    this.syncPlaybackState();
-  }
-
-  // Atskaņo visus audio elementus sinhroni
-  private async playAll(): Promise<void> {
-    const audio = this.audioElement.nativeElement;
-    const currentTime = this.currentTime;
-
-    // ⏳ Pagaida, kamēr visi audio elementi gatavi
-    await this.waitForAllAudioToBeReady();
-
-    // Uzliekam sinhrono laiku
-    audio.currentTime = currentTime;
-    const audioPlay = audio.play().catch(() => {});
-
-    const stemPlays = this.stemAudioElements.map(ref => {
-      const el = ref.nativeElement;
-      const type = el.dataset['type'] ?? '';
-      el.currentTime = currentTime;
-      return el.play().catch(() => {});
-    });
-
-    try {
-      await Promise.all([audioPlay, ...stemPlays]);
-    } catch (e) {
-      console.warn('Kļūda atskaņojot audio:', e);
-    }
-
-    // Skaļumi
-    this.audioElement.nativeElement.volume = this.isStemsMode ? 0 : this.volume;
-    this.updateStemsEffectiveVolume();
-  }
-
-
-
-  // Apstādina visus audio elementus
-  private pauseAll(): void {
-    this.audioElement.nativeElement.pause();
-    this.stemAudioElements.forEach(ref => ref.nativeElement.pause());
-  }
-
-  // Sinhronizē atskaņošanas stāvokli
-  private syncPlaybackState() {
-    const isPlaying = this.playerService.getIsPlaying();
-    if (isPlaying) {
-      this.playAll();
-    } else {
-      this.pauseAll();
-    }
-  }
-
-  // Pārslēdz režīmu starp parasto un stems
-  onStemsToggle() {
-    if (this.isToggleBlocked) return; // Bloķē, ja jau darbojas
-
-    this.isToggleBlocked = true;
-    const newMode = !this.isStemsMode;
-
-    this.stemsMixerService.updateMixerSettings({ is_stems_mode: newMode }).subscribe({
-      next: () => {
-        const fadeDuration = 500;
-        const main = this.audioElement.nativeElement;
-
-        // Stems fade-in/out
-        this.stemAudioElements.forEach(ref => {
-          const el = ref.nativeElement;
-          const type = el.dataset['type'] ?? '';
-          const base = this.stemVolumes[type] ?? 0.5;
-
-          let adjusted = (base - 0.5) * 2 + 1.0;
-          adjusted = Math.max(0, Math.min(adjusted, 1.5));
-          const finalVolume = adjusted * this.volume;
-
-          if (newMode) {
-            this.fadeVolume(el, 0, finalVolume, fadeDuration);
-          } else {
-            this.fadeVolume(el, el.volume, 0, fadeDuration);
-          }
-        });
-
-        // Main audio fade
-        if (newMode) {
-          this.fadeVolume(main, this.volume, 0, fadeDuration);
-        } else {
-          this.fadeVolume(main, 0, this.volume, fadeDuration);
-        }
-
-        this.isStemsMode = newMode;
-
-        // Atbloķējam pēc 1 sekundes --- toggle block
-        setTimeout(() => {
-          this.isToggleBlocked = false;
-        }, 500);
-      },
-      error: (err) => {
-        console.warn('Neizdevās pārslēgt režīmu:', err);
-        this.isToggleBlocked = false;
-      }
-    });
+  // Kad dziesma beidzas
+  onEnded() {
+    this.isPlaying = false;
+    this.currentTime = 0;
+    this.playerService.setCurrentTime(0);
   }
 
 
 
 
 
+  // Skaļums un režīmi
 
-
-  // Kad tiek mainīts individuālais stems skaļums
-  onStemVolumeChange(type: string, event: Event) {
-    const input = event.target as HTMLInputElement;
-    const value = +input.value;
-    this.stemVolumes[type] = value;
-    this.updateStemsEffectiveVolume();
-  }
-
-  // Kad tiek apstiprināta skaļuma izmaiņa
-  onStemVolumeChangeEnd(type: string) {
-    const value = this.stemVolumes[type];
-    this.stemsMixerService.updateMixerSettings({ [`${type}_level`]: value }).subscribe();
-  }
-
-  // Kad beidzas vilkšana
-  onSeekEnd() {
-    this.isSeeking = false;
-    this.playerService.setCurrentTime(this.currentTime);
-
-    this.audioElement.nativeElement.currentTime = this.currentTime;
-    this.stemAudioElements.forEach(ref => ref.nativeElement.currentTime = this.currentTime);
-
-    // 🧠 Pāratjauno sinhrono atskaņošanu
-    if (this.isPlaying) {
-      this.playAll();
-    }
-  }
-
-
-  // Kad sākas vilkšana
-  seek(event: any) {
-    this.currentTime = +event.target.value;
-    this.isSeeking = true;
-  }
-
-  // Pārslēdz atskaņošanu/pauzi
-  togglePlay() {
-    this.playerService.togglePlayback();
-  }
-
-  // Uzstāda kopējo skaļumu
   setVolume(value: number) {
     this.volume = value;
     localStorage.setItem('playerVolume', value.toString());
 
-    if (!this.isStemsMode) {
-      this.audioElement.nativeElement.volume = value;
-    } else {
+    if (this.isStemsMode) {
       this.updateStemsEffectiveVolume();
+    } else {
+      this.audioElement.nativeElement.volume = value;
     }
   }
-
-  // Atjaunina katras stems reālo skaļumu
-  private updateStemsEffectiveVolume() {
-    const boostFactor = 2; // 0.5 → 100%, 1.0 → 200%, но мы ограничим ниже
-
-    this.stemAudioElements.forEach(ref => {
-      const el = ref.nativeElement;
-      const type = el.dataset['type'] ?? '';
-      const base = this.stemVolumes[type] ?? 0.5;
-
-      // 🔈 Pielāgotā skaļuma aprēķins
-      let adjusted = (base - 0.5) * boostFactor + 1.0; // 0.5 → 1.0; 1.0 → 2.0; 0 → 0
-      adjusted = Math.max(0, Math.min(adjusted, 1.5)); // Maks. 150%
-
-      el.volume = this.isStemsMode ? adjusted * this.volume : 0;
-    });
-  }
-
-
 
   // Kad tiek ievadīts jauns skaļuma līmenis
   onVolumeInput(event: Event) {
@@ -368,18 +290,265 @@ export class PlayerComponent {
     this.setVolume(+input.value);
   }
 
+  onVolumeChangeEnd(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = +input.value;
+    this.volume = value;
+    localStorage.setItem('playerVolume', value.toString());
+  }
+
+  onVolumeCommit(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = +input.value;
+
+    this.volume = value;
+
+    if (this.isStemsMode) {
+      this.updateStemsEffectiveVolume();
+    } else {
+      this.audioElement.nativeElement.volume = value;
+    }
+
+    // Atceļ iepriekšējo taimeri, ja ir
+    if (this.mainVolumeTimer) {
+      clearTimeout(this.mainVolumeTimer);
+    }
+
+    // Saglabā vērtību pēc 400ms, ja nav citu izmaiņu
+    this.mainVolumeTimer = setTimeout(() => {
+      localStorage.setItem('playerVolume', value.toString());
+      this.mainVolumeTimer = null;
+    }, 400);
+  }
+
+
+
+  // Pārslēdz režīmu starp parasto un stems
+  onStemsToggle(): void {
+    if (this.isToggleBlocked || !this.currentTrack) return;
+    this.isToggleBlocked = true;
+
+    const newMode = this.isStemsMode;
+    const fadeDuration = 300;
+
+    this.stemsMixerService.updateMixerSettings({ is_stems_mode: newMode }).subscribe({
+      next: () => {
+        this.isStemsMode = newMode;
+
+        if (newMode) {
+          this.fadeVolume(this.audioElement.nativeElement, this.volume, 0, fadeDuration);
+
+          for (const type of Object.keys(this.stemVolumes)) {
+            const ref = this.stemAudioElements.find(
+              ref => ref.nativeElement.dataset['type']?.trim() === type
+            );
+            if (ref) {
+              const el = ref.nativeElement;
+              const targetVolume = this.calculateStemVolume(type);
+              this.fadeVolume(el, 0, targetVolume, fadeDuration);
+            }
+          }
+        } else {
+          this.fadeVolume(this.audioElement.nativeElement, 0, this.volume, fadeDuration);
+
+          this.stemAudioElements.forEach(ref => {
+            this.fadeVolume(ref.nativeElement, ref.nativeElement.volume, 0, fadeDuration);
+          });
+        }
+
+
+        setTimeout(() => this.isToggleBlocked = false, fadeDuration + 100);
+      },
+      error: (err) => {
+        console.error('Stems toggle failed:', err);
+        this.isToggleBlocked = false;
+      }
+    });
+  }
+
+  private calculateStemVolume(type: string): number {
+    const base = this.stemVolumes[type] ?? 0.5;
+    const boosted = Math.max(0, Math.min((base - 0.5) * 2 + 1.0, 1.5));
+    let volume = boosted * this.volume;
+
+    volume = Math.max(0, Math.min(volume, 1));
+
+    return volume;
+  }
+
+  private applyStemVolume(type: string): void {
+    const value = this.stemVolumes[type] ?? 0.5;
+    const ref = this.stemAudioElements.find(
+      ref => ref.nativeElement.dataset['type']?.trim() === type
+    );
+    if (!ref) return;
+
+    const el = ref.nativeElement;
+    const boosted = Math.max(0, Math.min((value - 0.5) * 2 + 1.0, 1.5));
+    let effectiveVolume = this.isStemsMode ? boosted * this.volume : 0;
+
+    effectiveVolume = Math.max(0, Math.min(effectiveVolume, 1));
+
+    el.volume = effectiveVolume;
+  }
+
+  // Atjaunina katras stems reālo skaļumu
+  private updateStemsEffectiveVolume(): void {
+    if (!this.stemAudioElements || this.stemAudioElements.length === 0) return;
+
+    this.stemAudioElements.forEach(ref => {
+      const el = ref.nativeElement;
+      const type = el.dataset['type']?.trim();
+
+      if (!type) {
+        console.warn('Stem audio missing data-type:', el);
+        return;
+      }
+
+      const baseVolume = this.stemVolumes[type] ?? 0.5;
+      const boosted = Math.max(0, Math.min((baseVolume - 0.5) * 2 + 1.0, 1.5));
+      let effectiveVolume = this.isStemsMode ? boosted * this.volume : 0;
+
+
+      effectiveVolume = Math.max(0, Math.min(effectiveVolume, 1));
+
+      el.volume = effectiveVolume;
+
+      // console.log(`[${type}] base=${baseVolume}, boost=${boosted}, main=${this.volume}, → applied=${effectiveVolume}`);
+    });
+
+    if (this.audioElement?.nativeElement) {
+      this.audioElement.nativeElement.volume = this.isStemsMode ? 0 : Math.max(0, Math.min(this.volume, 1));
+    }
+  }
+
+  resetStemVolumes(): void {
+    // Atjauno katra ceļa vērtību lokāli uz 0.5
+    for (const type of Object.keys(this.stemVolumes)) {
+      this.stemVolumes[type] = 0.5;
+    }
+
+    // Pielieto skaņas skaļumu momentāni
+    this.updateStemsEffectiveVolume();
+
+    // Saglabā izmaiņas DB (visi ceļi vienā pieprasījumā)
+    this.stemsMixerService.updateMixerSettings({
+      bass_level: 0.5,
+      drums_level: 0.5,
+      melody_level: 0.5,
+      vocals_level: 0.5
+    }).subscribe({
+      next: () => {
+        console.log('Stems skaļumi veiksmīgi atiestatīti uz servera');
+      },
+      error: (err) => {
+        console.error('Neizdevās saglabāt skaļumu iestatījumus:', err);
+      }
+    });
+  }
+
+  private applyFinalVolumeSettings(isFromToggle = false) {
+    if (this.isStemsMode) {
+      this.stemAudioElements.forEach(ref => {
+        const type = ref.nativeElement.dataset['type'] ?? '';
+        const targetVolume = this.calculateStemVolume(type);
+        this.fadeVolume(ref.nativeElement, 0, targetVolume, 300);
+      });
+
+      this.fadeVolume(this.audioElement.nativeElement, this.volume, 0, 300);
+    } else {
+      this.fadeVolume(this.audioElement.nativeElement, 0, this.volume, 300);
+    }
+  }
+
+
+  // Stem kontrole (slideri)
+  onStemVolumeInput(type: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = +input.value;
+
+    // Atjaunojam lokālo vērtību
+    this.stemVolumes[type] = value;
+
+    // Pielietojam uzreiz
+    this.applyStemVolume(type);
+
+    // Atceļ iepriekšējo taimeri, ja ir
+    if (this.stemVolumeTimers[type]) {
+      clearTimeout(this.stemVolumeTimers[type]);
+    }
+
+    // Nosūta pēc 400ms ja vairāk nav izmaiņu
+    this.stemVolumeTimers[type] = setTimeout(() => {
+      console.log(`[DB] Saglabājam skaļumu "${type}" → ${value}`);
+      this.stemsMixerService.updateMixerSettings({ [`${type}_level`]: value }).subscribe();
+      delete this.stemVolumeTimers[type]; // notīrām
+    }, 400);
+  }
+
+
+
+
+  // Progress bar un vilkšana
+
+  // Kad sākas vilkšana
+  seek(event: any) {
+    this.currentTime = +event.target.value;
+    this.isSeeking = true;
+  }
+
+
+
+
+  private updateInitialVolumes() {
+    this.stemAudioElements.forEach(ref => {
+      ref.nativeElement.volume = 0;
+    });
+
+    this.audioElement.nativeElement.volume = this.isStemsMode ? 0 : this.volume;
+  }
+
+  // Kad beidzas vilkšana
+  onSeekEnd(): void {
+    this.isSeeking = false;
+
+    const newTime = this.currentTime;
+
+    // Uzstāda jauno laiku visiem audio elementiem
+    this.audioElement.nativeElement.currentTime = newTime;
+    this.stemAudioElements.forEach(ref => {
+      ref.nativeElement.currentTime = newTime;
+    });
+
+    // Ja bija spēlēšana — atsākam no jauna laika
+    if (this.isPlaying) {
+      this.resumeAfterSeek();
+    }
+  }
+
+  private resumeAfterSeek(): void {
+    if (this.isStemsMode) {
+      // Tikai stem audio
+      this.stemAudioElements.forEach(ref => ref.nativeElement.play().catch(() => {}));
+    } else {
+      // Tikai galvenais audio
+      this.audioElement.nativeElement.play().catch(() => {});
+    }
+  }
+
+
+  // Papildu UI, resize, karstie taustiņi utt
+
+  // Pārslēdz atskaņošanu/pauzi
+  togglePlay() {
+    this.playerService.togglePlayback();
+  }
+
   // Formatē laiku MM:SS
   formatTime(time: number): string {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60).toString().padStart(2, '0');
     return `${minutes}:${seconds}`;
-  }
-
-  // Kad dziesma beidzas
-  onEnded() {
-    this.isPlaying = false;
-    this.currentTime = 0;
-    this.playerService.setCurrentTime(0);
   }
 
   // Resize loģika
@@ -418,7 +587,7 @@ export class PlayerComponent {
     setTimeout(() => this.bounceClass = '', 400);
   }
 
-  // Īsceļš: atskaņošana ar Space
+  // atskaņošana ar Space
   @HostListener('document:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {
     const tag = (event.target as HTMLElement).tagName.toLowerCase();

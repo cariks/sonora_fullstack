@@ -1,8 +1,8 @@
+.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
 
-
-::ng-deep .mat-mdc-slide-toggle {
-  --mdc-switch-selected-track-color: #22c55e; /* Tailwind green-500 */
-  --mdc-switch-selected-thumb-color: #22c55e;
-  --mdc-switch-unselected-track-color: #404040;
-  --mdc-switch-unselected-thumb-color: #666;
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
 }

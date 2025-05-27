@@ -12,18 +12,19 @@ export class HeaderComponent implements OnInit {
 
   constructor(private auth: AuthService) {}
 
-  ngOnInit() {
-    this.auth.getUser().subscribe({
-      next: (res) => this.loggedInUser = res,
-      error: (err) => console.error('Neizdevās ielādēt lietotāju:', err)
+  ngOnInit(): void {
+    this.auth.currentUser$.subscribe(user => {
+      this.loggedInUser = user;
     });
   }
+
+
 
   toggleMenu() {
     this.menuOpen = !this.menuOpen;
   }
 
   logout() {
-    this.auth.logout().subscribe(() => window.location.href = '/login');
+    this.auth.logout().subscribe(() => window.location.href = '/auth-page');
   }
 }

@@ -10,6 +10,7 @@ import { MySongsComponent } from './pages/my-songs/my-songs.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { AuthGuard } from './guards/auth.guard';
 import { UserProfileComponent } from './pages/user-profile/user-profile.component';
+import {AuthPageComponent} from "./pages/auth-page/auth-page.component";
 
 const routes: Routes = [
   {
@@ -26,7 +27,7 @@ const routes: Routes = [
       { "path": 'user/:username', "component": UserProfileComponent }
     ]
   },
-  { path: 'login', component: LoginComponent },
+  { path: 'auth-page', component: AuthPageComponent },
   { path: '**', redirectTo: '' }
 ];
 

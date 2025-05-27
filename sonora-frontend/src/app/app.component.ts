@@ -15,13 +15,13 @@ export class AppComponent implements OnInit {
   constructor(private auth: AuthService, private router: Router) {}
 
   ngOnInit() {
-    this.auth.initUser();
 
-    // Ждём завершения навигации
+    // navigācija
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe(() => {
       this.isAppReady = true;
     });
   }
+
 }
