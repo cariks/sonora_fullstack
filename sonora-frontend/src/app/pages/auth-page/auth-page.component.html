@@ -14,7 +14,7 @@
       </div>
 
       <app-login *ngIf="view === 'login'" (success)="handleSuccess()" [loading]="isLoading"></app-login>
-<!--      <app-register *ngIf="view === 'register'" (success)="handleSuccess()" [loading]="isLoading"></app-register>-->
+      <app-register *ngIf="view === 'register'"></app-register>
     </div>
 
   </div>

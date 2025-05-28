@@ -324,11 +324,14 @@ export class PlayerComponent {
 
 
   // Pārslēdz režīmu starp parasto un stems
-  onStemsToggle(): void {
+  onStemsToggle(event: Event): void {
     if (this.isToggleBlocked || !this.currentTrack) return;
+
+    const input = event.target as HTMLInputElement;
+    const newMode = input.checked;
+
     this.isToggleBlocked = true;
 
-    const newMode = this.isStemsMode;
     const fadeDuration = 300;
 
     this.stemsMixerService.updateMixerSettings({ is_stems_mode: newMode }).subscribe({
@@ -356,7 +359,6 @@ export class PlayerComponent {
           });
         }
 
-
         setTimeout(() => this.isToggleBlocked = false, fadeDuration + 100);
       },
       error: (err) => {
@@ -365,6 +367,7 @@ export class PlayerComponent {
       }
     });
   }
+
 
   private calculateStemVolume(type: string): number {
     const base = this.stemVolumes[type] ?? 0.5;

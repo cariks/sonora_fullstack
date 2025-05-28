@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\Auth\RegisterController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TrackController;
 use App\Http\Controllers\UserStemsMixerController;
+use App\Http\Controllers\ArtistGenreController;
 
 
 
@@ -24,6 +26,13 @@ use App\Http\Controllers\UserStemsMixerController;
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
 
+Route::post('/register', [\App\Http\Controllers\Auth\RegisterController::class, 'register']);
+Route::get('/check-username', [RegisterController::class, 'checkUsername']);
+
+Route::post('/suggested-artists', [ArtistGenreController::class, 'getSuggestedArtists']);
+
+
+
 // Lietotāja dati (ar tokenu)
 Route::middleware('auth:sanctum')->get('/user', [AuthController::class, 'me']);
 
@@ -35,6 +44,10 @@ Route::get('/tracks', [TrackController::class, 'index']);
 Route::get('/stream/{type}/{filename}', [TrackController::class, 'streamFile']);
 
 Route::get('/stream/stems/track_{version_id}/{filename}', [TrackController::class, 'streamStem']);
+
+// Žanri, artisti utt
+Route::get('/artist/{artistId}/genres', [ArtistGenreController::class, 'getGenres']);
+
 
 
 // Tikai autorizētiem lietotājiem

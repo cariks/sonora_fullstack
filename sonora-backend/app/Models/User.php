@@ -53,4 +53,24 @@ class User extends Authenticatable
     {
         return $this->hasOne(\App\Models\Photo::class)->where('is_primary', true);
     }
+
+    public function favoriteGenres()
+    {
+        return $this->belongsToMany(Genre::class, 'user_favorite_genres', 'user_id', 'genre_id')
+            ->withPivot('weight')
+            ->withTimestamps();
+    }
+
+    public function favoriteArtists()
+    {
+        return $this->belongsToMany(User::class, 'user_favorite_artists', 'user_id', 'artist_id')
+            ->withPivot('weight')
+            ->withTimestamps();
+    }
+
+    public function artistGenres()
+    {
+        return $this->belongsToMany(Genre::class, 'artist_genres', 'artist_id', 'genre_id')
+            ->withTimestamps();
+    }
 }

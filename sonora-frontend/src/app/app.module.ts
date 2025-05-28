@@ -8,7 +8,7 @@ import { RegisterComponent } from './pages/register/register.component';
 import { AuthPageComponent } from './pages/auth-page/auth-page.component';
 
 
-import { FormsModule } from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { PlayerComponent } from './layout/player/player.component';
@@ -55,6 +55,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     FormsModule,
     BrowserAnimationsModule,
     MatSlideToggleModule,
+    ReactiveFormsModule,
 
 
   ],

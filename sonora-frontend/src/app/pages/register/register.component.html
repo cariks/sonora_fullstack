@@ -1,1 +1,99 @@
-<p>register works!</p>
+<!-- PROGRESS BAR -->
+<div class="w-full px-10 pt-10">
+  <div class="flex justify-between items-center max-w-md mx-auto mb-6">
+    <div class="flex-1 h-1 bg-neutral-700 rounded overflow-hidden relative">
+      <div class="h-full bg-green-500 transition-all duration-300"
+           [style.width.%]="step * 25"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- 1 SOLIS : Pamatforma -->
+<div *ngIf="step === 1" class="flex flex-col w-full px-10 py-10 overflow-y-auto scrollbar-hide">
+  <h2 class="text-4xl font-semibold text-center mb-10 text-white">Reģistrācija</h2>
+
+  <form [formGroup]="registerForm" (ngSubmit)="nextStep()" class="flex flex-col gap-6 w-full max-w-md mx-auto">
+    <!-- Email -->
+    <div class="flex flex-col gap-1">
+      <label for="email" class="text-sm text-neutral-400">E-pasts</label>
+      <input type="email" id="email" formControlName="email" class="input" placeholder="tavs@email.com" />
+      <p class="text-red-500 text-sm" *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">Nepareizs e-pasts</p>
+    </div>
+
+    <!-- Username -->
+    <div class="flex flex-col gap-1 relative">
+      <label for="username" class="text-sm text-neutral-400">Lietotājvārds</label>
+      <input
+        type="text"
+        id="username"
+        formControlName="username"
+        class="input pr-10"
+        placeholder="lietotājvārds"
+      />
+      <p class="text-red-500 text-sm" *ngIf="registerForm.get('username')?.touched && registerForm.get('username')?.invalid">
+        <span *ngIf="registerForm.get('username')?.errors?.['required']">Lūdzu ievadi lietotājvārdu</span>
+        <span *ngIf="registerForm.get('username')?.errors?.['minlength']">Minimālais garums — 3 simboli</span>
+        <span *ngIf="registerForm.get('username')?.errors?.['maxlength']">Maksimālais garums — 60 simboli</span>
+        <span *ngIf="registerForm.get('username')?.errors?.['pattern']">Nedrīkst saturēt: %, /, \, &#64;, ?</span>
+      </p>
+
+      <!-- Ja lietotājvārds aizņemts -->
+      <p class="text-red-500 text-sm" *ngIf="usernameAvailable === false">
+        Šis lietotājvārds jau ir aizņemts
+      </p>
+
+      <div *ngIf="usernameAvailable" class="absolute right-4 top-[35px] text-green-400">
+        ✓
+      </div>
+    </div>
+
+
+    <!-- Password -->
+    <div class="flex flex-col gap-1">
+      <label for="password" class="text-sm text-neutral-400">Parole</label>
+      <input type="password" id="password" formControlName="password" class="input" placeholder="••••••••" />
+      <p class="text-red-500 text-sm" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+        Parolei jābūt vismaz 8 simboliem, jābūt lielam burtam un ciparam
+      </p>
+    </div>
+
+    <!-- Confirm password -->
+    <div class="flex flex-col gap-1">
+      <label for="confirmPassword" class="text-sm text-neutral-400">Atkārtot paroli</label>
+      <input type="password" id="confirmPassword" formControlName="confirmPassword" class="input" placeholder="••••••••" />
+      <p class="text-red-500 text-sm" *ngIf="registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched">
+        Paroles nesakrīt
+      </p>
+    </div>
+
+    <!-- Button -->
+    <button type="submit" class="btn-green">
+      <span>Turpināt</span>
+      <div *ngIf="loading" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+    </button>
+  </form>
+</div>
+
+<!-- 2 SOLIS : Foto -->
+<div *ngIf="step === 2" class="flex flex-col items-center gap-6 px-10 py-10 text-white">
+  <h2 class="text-3xl font-semibold text-center">Profila bilde</h2>
+
+  <div class="w-40 h-40 rounded-full overflow-hidden border-4 border-green-500">
+    <img *ngIf="photoPreviewUrl; else placeholder" [src]="photoPreviewUrl" class="w-full h-full object-cover" />
+    <ng-template #placeholder>
+      <div class="w-full h-full bg-neutral-700 flex items-center justify-center text-sm text-neutral-400">
+        Nav attēla
+      </div>
+    </ng-template>
+  </div>
+
+  <label class="cursor-pointer bg-neutral-700 hover:bg-neutral-600 px-4 py-2 rounded-xl transition">
+    Izvēlēties attēlu
+    <input type="file" accept="image/png, image/jpeg" class="hidden" (change)="onPhotoSelected($event)" />
+  </label>
+
+  <button (click)="goToGenresStep()" class="btn-green">
+    Turpināt
+  </button>
+</div>
