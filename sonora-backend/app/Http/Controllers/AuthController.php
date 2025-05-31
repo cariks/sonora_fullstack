@@ -28,7 +28,7 @@ class AuthController extends Controller
 
     public function me()
     {
-        $user = Auth::user();
+        $user = Auth::user()->load('primaryPhoto');
 
         return response()->json([
             'id' => $user->id,
@@ -41,7 +41,7 @@ class AuthController extends Controller
             'verified' => $user->verified,
             'last_online' => $user->last_online,
             'photo' => $user->primaryPhoto?->photo_url
-                ? asset('storage/' . $user->primaryPhoto->photo_url)
+                ? asset($user->primaryPhoto->photo_url)
                 : null
         ]);
     }

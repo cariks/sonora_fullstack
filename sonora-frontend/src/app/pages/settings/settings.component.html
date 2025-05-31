@@ -2,17 +2,11 @@
   <div>
 
     <div class="flex items-center gap-6">
-      <img
-        *ngIf="user?.photo; else defaultPhoto"
-        [src]="user.photo"
-        alt="Profila bilde"
-        class="w-24 h-24 rounded-full object-cover border border-neutral-700"
-      />
-      <ng-template #defaultPhoto>
-        <div class="w-24 h-24 rounded-full bg-neutral-700 flex items-center justify-center text-xl font-bold">
-          {{ user.display_name?.charAt(0) || '?' }}
-        </div>
-      </ng-template>
+      <app-profile-avatar
+        [photoUrl]="user?.photo"
+        [displayName]="user?.display_name"
+        [size]="300">
+      </app-profile-avatar>
 
       <div>
         <h1 class="text-2xl font-bold">{{ user.display_name }}</h1>

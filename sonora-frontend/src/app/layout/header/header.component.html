@@ -15,10 +15,10 @@
 
   <!-- User icon + popup -->
   <div class="relative" (click)="toggleMenu()">
-    <img
-      [src]="loggedInUser?.photo || 'assets/default-avatar.png'"
-      alt="Lietotājs"
-      class="w-10 h-10 rounded-full cursor-pointer border border-neutral-700 object-cover"
+    <app-profile-avatar
+      [photoUrl]="loggedInUser?.photo"
+      [displayName]="loggedInUser?.display_name || loggedInUser?.username"
+      [size]="40"
     />
 
     <!-- Popup menu -->

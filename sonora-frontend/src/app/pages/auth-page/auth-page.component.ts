@@ -9,7 +9,7 @@ import { ChangeDetectorRef } from '@angular/core';
   styleUrl: './auth-page.component.scss'
 })
 export class AuthPageComponent implements AfterViewChecked {
-  view: 'login' | 'register' = 'register';
+  view: 'login' | 'register' = 'login';
   currentStep = 1;
 
   @ViewChild(RegisterComponent)

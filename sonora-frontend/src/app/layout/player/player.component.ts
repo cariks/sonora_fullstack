@@ -32,6 +32,7 @@ export class PlayerComponent {
   isSeeking = false;
   volume = 1;
   isToggleBlocked = false;
+  likeStatus: 'like' | 'dislike' | null = null;
 
 
   private mixerSettingsLoaded = false;
@@ -148,6 +149,7 @@ export class PlayerComponent {
       this.syncPlaybackState();
     }
   }
+
 
 
 

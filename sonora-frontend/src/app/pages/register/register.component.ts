@@ -3,6 +3,7 @@ import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { of, Subject } from 'rxjs';
+import confetti from 'canvas-confetti';
 
 
 @Component({
@@ -24,6 +25,8 @@ export class RegisterComponent {
   usernameAvailable: boolean | null = null;
 
   // 2 SOLIS
+
+  tempPhotoPath: string | null = null;
 
   selectedPhotoFile: File | null = null;
   photoPreviewUrl: string | null = null;
@@ -128,6 +131,7 @@ export class RegisterComponent {
   }
 
   // 2 SOLIS
+  photoServerPath: string | null = null;
 
   onPhotoSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -135,34 +139,51 @@ export class RegisterComponent {
       const file = input.files[0];
 
       const allowedTypes = ['image/png', 'image/jpeg'];
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      const maxSize = 10 * 1024 * 1024;
 
-      // validācija
       if (!allowedTypes.includes(file.type)) {
         this.photoError = 'Nepareizs formāts. Atļauti tikai PNG vai JPG.';
-        this.selectedPhotoFile = null;
-        this.photoPreviewUrl = null;
         return;
       }
 
       if (file.size > maxSize) {
         this.photoError = 'Attēls ir pārāk liels. Maksimālais izmērs – 10MB.';
-        this.selectedPhotoFile = null;
-        this.photoPreviewUrl = null;
         return;
       }
-
-      // ja ir ok tad radam attelu
-      this.photoError = null;
-      this.selectedPhotoFile = file;
 
       const reader = new FileReader();
       reader.onload = () => {
         this.photoPreviewUrl = reader.result as string;
       };
       reader.readAsDataURL(file);
+
+      const formData = new FormData();
+      formData.append('photo', file);
+
+      this.http.post('/api/upload-temp-photo', formData, {
+        responseType: 'text'
+      }).subscribe({
+        next: (res: string) => {
+          const match = res.match(/storage\/[^\s<"]+/);
+          if (match) {
+            this.tempPhotoPath = match[0];
+            this.photoError = null;
+            console.log('📸 Uploaded temp photo:', this.tempPhotoPath);
+          } else {
+            this.photoError = 'Nevarēja nolasīt augšupielādēto attēlu.';
+          }
+        },
+        error: err => {
+          this.photoError = 'Neizdevās augšupielādēt attēlu.';
+          console.error(err);
+        }
+      });
     }
   }
+
+
+
+
 
   goToGenresStep(): void {
     if (this.selectedPhotoFile) {
@@ -227,6 +248,10 @@ export class RegisterComponent {
     }
   }
 
+  userEmail: string = '';
+  userPassword: string = '';
+  autoLoginLoading = false;
+
   submitRegistration(): void {
     if (!this.registerForm.valid || this.selectedGenres.length < 3) return;
 
@@ -235,8 +260,8 @@ export class RegisterComponent {
     formData.append('email', this.registerForm.value.email);
     formData.append('password', this.registerForm.value.password);
 
-    if (this.selectedPhotoFile) {
-      formData.append('photo', this.selectedPhotoFile);
+    if (this.tempPhotoPath) {
+      formData.append('photo_path', this.tempPhotoPath);
     }
 
     this.selectedGenres.forEach(id => {
@@ -251,19 +276,61 @@ export class RegisterComponent {
 
     this.http.get('http://127.0.0.1:8000/sanctum/csrf-cookie', { withCredentials: true })
       .subscribe(() => {
-        this.http.post('http://127.0.0.1:8000/api/register', formData, { withCredentials: true })
+        this.http.post<{ user_id: number }>('http://127.0.0.1:8000/api/register', formData, { withCredentials: true })
           .subscribe({
-            next: () => {
+            next: (res) => {
+              this.userEmail = this.registerForm.value.email;
+              this.userPassword = this.registerForm.value.password;
               this.loading = false;
-              alert('Veiksmīga reģistrācija!');
+              this.step = 5;
+
+              confetti({
+                particleCount: 150,
+                spread: 90,
+                origin: {
+                  x: 0.2,
+                  y: 0.5
+                },
+                angle: 90,
+              });
+
+              this.loading = false;
             },
             error: (err) => {
-              this.loading = false;
-              this.error = 'Neizdevās reģistrācija. Mēģini vēlreiz.';
+              this.error = 'Neizdevās reģistrācija.';
               console.error(err);
             }
           });
       });
   }
+
+  // 5 SOLIS
+
+  autoLogin() {
+    this.autoLoginLoading = true;
+
+    const loginData = {
+      email: this.userEmail,
+      password: this.userPassword
+    };
+
+    this.http.get('http://127.0.0.1:8000/sanctum/csrf-cookie', { withCredentials: true }).subscribe(() => {
+      this.http.post('/api/login', loginData, { withCredentials: true }).subscribe({
+        next: () => {
+          // uz galveno lapu
+          window.location.href = '/home';
+        },
+        error: (err) => {
+          this.autoLoginLoading = false;
+          console.error('Neizdevās pieslēgties:', err);
+          alert('Neizdevās automātiski pieslēgties');
+
+
+
+        }
+      });
+    });
+  }
+
 
 }

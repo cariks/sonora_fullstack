@@ -133,11 +133,10 @@
       <button
         (click)="goToGenresStep()"
         class="btn-green disabled:bg-gray-600 disabled:text-gray-300 disabled:cursor-not-allowed"
-        [disabled]="!selectedPhotoFile || photoError"
+        [disabled]="!tempPhotoPath || photoError"
       >
         Turpināt
       </button>
-
 
       <!-- Izlaist ar popup zem pogas -->
       <div class="relative w-full flex flex-col items-center group">
@@ -226,7 +225,7 @@
         <p *ngIf="artists.length === 0" class="text-gray-1 text-[16px] mt-4 text-center mb-14">
           Diemžēl nav atrasti neviens mākslinieks ar izvēlētajiem žanriem.
         </p>
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-3 gap-4">
           <div
             *ngFor="let artist of artists"
             (click)="toggleArtist(artist.id)"
@@ -287,4 +286,22 @@
     </div>
 
   </div>
+</div>
+
+
+<!-- 5 SOLIS -->
+<div *ngIf="step === 5" class="w-full h-full px-10 py-[100px] flex flex-col items-center  text-center">
+  <h2 class="text-[36px] font-medium text-white mb-1">Profils veiksmīgi izveidots!</h2>
+  <p class="text-[16px] text-[#D0D0D0] mb-[100px]">Tagad vari uzreiz pieslēgties savam jaunam kontam!</p>
+
+  <button
+    (click)="autoLogin()"
+    [disabled]="autoLoginLoading"
+    class="mt-4 w-full max-w-sm h-[56px] flex items-center justify-center gap-2 bg-white hover:text-gray-2 transition-all duration-300 text-dark-3 font-medium rounded-[8px]"
+  >
+    <span>Pieslēgties</span>
+    <div *ngIf="autoLoginLoading">
+      <div class="w-4 h-4 border-2 border-gray-2 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  </button>
 </div>

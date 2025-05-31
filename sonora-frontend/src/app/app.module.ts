@@ -25,6 +25,8 @@ import { ImageSequenceComponent } from './components/image-sequence/image-sequen
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import {ProfileAvatarComponent} from "./shared/profile-avatar/profile-avatar.component";
+import {CommonModule} from "@angular/common";
 
 
 
@@ -48,17 +50,19 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     AuthPageComponent,
 
   ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    HttpClientModule,
-    FormsModule,
-    BrowserAnimationsModule,
-    MatSlideToggleModule,
-    ReactiveFormsModule,
+    imports: [
+        CommonModule,
+        BrowserModule,
+        AppRoutingModule,
+        HttpClientModule,
+        FormsModule,
+        BrowserAnimationsModule,
+        MatSlideToggleModule,
+        ReactiveFormsModule,
+        ProfileAvatarComponent,
 
 
-  ],
+    ],
   providers: [
     {
     provide: HTTP_INTERCEPTORS,

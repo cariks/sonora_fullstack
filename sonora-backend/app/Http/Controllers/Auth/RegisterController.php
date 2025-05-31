@@ -43,7 +43,7 @@ class RegisterController extends Controller
             'favorite_genres.*' => 'exists:genres,id',
             'favorite_artists' => 'nullable|array',
             'favorite_artists.*' => 'exists:users,id',
-            'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:10240', // max 10MB
+            'photo_path' => 'nullable|string|max:255',
         ]);
 
         if ($validated->fails()) {
@@ -80,19 +80,34 @@ class RegisterController extends Controller
             }
         }
 
-        // Apstrādājam profilbildes augšupielādi (ja tāda ir)
-        if ($request->hasFile('profile_photo')) {
-            // Saglabājam failu mapē: storage/app/public/user_photos
-            $path = $request->file('profile_photo')->store('user_photos', 'public');
+        // Saglabājam pagaidu profila attēlu, ja norādīts ceļš
+        if ($request->filled('photo_path')) {
+            $originalPath = $request->photo_path; // piemēram: storage/temp_photos/abc.jpg
+            $filename = basename($originalPath);  // abc.jpg
+            $source = storage_path('app/public/temp_photos/' . $filename);
+            $destination = storage_path('app/public/user_photos/' . $filename);
 
-            // Ierakstām foto datubāzē
+            // Pārvietojam (vai kopējam) failu
+            if (file_exists($source)) {
+                if (rename($source, $destination)) {
+                    $finalPath = 'storage/user_photos/' . $filename;
+                } else {
+                    // Ja neizdevās pārvietot, izmanto sākotnējo ceļu
+                    $finalPath = $originalPath;
+                }
+            } else {
+                $finalPath = $originalPath; // Ja fails neeksistē
+            }
+
+            // Saglabājam DB
             Photo::create([
                 'user_id' => $user->id,
-                'photo_url' => 'storage/' . $path, // Pieejamais ceļš no publiskās mapes
-                'is_primary' => true,
+                'photo_url' => $finalPath,
                 'position' => 0,
+                'is_primary' => true,
             ]);
         }
+
 
         return response()->json(['message' => 'Lietotājs veiksmīgi reģistrēts'], 201);
     }

@@ -39,6 +39,19 @@
         -->
       </div>
 
+
+      <div class="flex items-center gap-4">
+        <!-- Like button -->
+        <button (click)="likeTrack()" [class.text-green-500]="likeStatus === 'like'">
+          <i class="fas fa-thumbs-up"></i>
+        </button>
+
+        <!-- Dislike button -->
+        <button (click)="dislikeTrack()" [class.text-red-500]="likeStatus === 'dislike'">
+          <i class="fas fa-thumbs-down"></i>
+        </button>
+      </div>
+
       <!-- Controls -->
       <div class="flex items-center justify-center gap-6">
         <button

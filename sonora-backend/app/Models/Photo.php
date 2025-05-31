@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Photo extends Model
 {
+    use HasFactory;
+
     protected $table = 'user_photos';
 
     protected $fillable = ['user_id', 'photo_url', 'position', 'is_primary'];

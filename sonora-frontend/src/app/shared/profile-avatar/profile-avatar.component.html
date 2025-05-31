@@ -1,0 +1,17 @@
+<ng-container *ngIf="photoUrl; else showInitials">
+  <img
+    [src]="photoUrl"
+    [alt]="displayName"
+    class="rounded-full object-cover"
+    [ngStyle]="{ width: size + 'px', height: size + 'px' }"
+  />
+</ng-container>
+
+<ng-template #showInitials>
+  <div
+    class="rounded-full flex items-center justify-center font-semibold bg-neutral-700 text-white select-none hover:bg-neutral-600 transition-all transition-300"
+    [ngStyle]="{ width: size + 'px', height: size + 'px', fontSize: (size * 0.4) + 'px' }"
+  >
+    {{ initials }}
+  </div>
+</ng-template>
