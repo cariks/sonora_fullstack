@@ -1,34 +1,34 @@
-<!-- PROGRESS BAR -->
-<div class="w-full px-10 pt-10">
-  <div class="flex justify-between items-center max-w-md mx-auto mb-6">
-    <div class="flex-1 h-1 bg-neutral-700 rounded overflow-hidden relative">
-      <div class="h-full bg-green-500 transition-all duration-300"
-           [style.width.%]="step * 25"></div>
-    </div>
-  </div>
-</div>
+<!-- 1 SOLIS Pamatforma -->
+<div *ngIf="step === 1" class="flex flex-col w-full px-10 py-10 overflow-y-auto scrollbar-hide items-center">
+  <h2 class="text-[36px] font-medium text-center text-white">Izveido kontu</h2>
+  <p class="text-[16px] font-regular text-[#D0D0D0]">Ievadi savu informāciju, lai izveidotu Sonora profilu</p>
 
 
-<!-- 1 SOLIS : Pamatforma -->
-<div *ngIf="step === 1" class="flex flex-col w-full px-10 py-10 overflow-y-auto scrollbar-hide">
-  <h2 class="text-4xl font-semibold text-center mb-10 text-white">Reģistrācija</h2>
-
-  <form [formGroup]="registerForm" (ngSubmit)="nextStep()" class="flex flex-col gap-6 w-full max-w-md mx-auto">
-    <!-- Email -->
-    <div class="flex flex-col gap-1">
-      <label for="email" class="text-sm text-neutral-400">E-pasts</label>
-      <input type="email" id="email" formControlName="email" class="input" placeholder="tavs@email.com" />
-      <p class="text-red-500 text-sm" *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">Nepareizs e-pasts</p>
-    </div>
-
-    <!-- Username -->
+  <form [formGroup]="registerForm" (ngSubmit)="nextStep()" class="mt-10 flex flex-col gap-6 w-full max-w-md mx-auto">
+    <!-- epasts -->
     <div class="flex flex-col gap-1 relative">
-      <label for="username" class="text-sm text-neutral-400">Lietotājvārds</label>
+      <label for="email" class="text-[16px] text-white">E-pasts</label>
+      <input type="email" id="email" formControlName="email"
+             class="input"
+             placeholder="tavs@email.com" />
+      <p class="text-red-500 text-sm" *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">Nepareizs e-pasts</p>
+      <p class="text-red-500 text-sm" *ngIf="emailAvailable === false">
+        Šī e-pasta adrese jau ir aizņemta
+      </p>
+      <div *ngIf="emailAvailable" class="absolute right-5 top-[41px] text-green-400">
+        ✓
+      </div>
+
+    </div>
+
+    <!-- lietotajvards -->
+    <div class="flex flex-col gap-1 relative">
+      <label for="username" class="text-[16px] text-white">Lietotājvārds</label>
       <input
         type="text"
         id="username"
         formControlName="username"
-        class="input pr-10"
+        class="input"
         placeholder="lietotājvārds"
       />
       <p class="text-red-500 text-sm" *ngIf="registerForm.get('username')?.touched && registerForm.get('username')?.invalid">
@@ -43,57 +43,248 @@
         Šis lietotājvārds jau ir aizņemts
       </p>
 
-      <div *ngIf="usernameAvailable" class="absolute right-4 top-[35px] text-green-400">
+      <div *ngIf="usernameAvailable" class="absolute right-5 top-[41px] text-green-400">
         ✓
       </div>
     </div>
 
-
-    <!-- Password -->
+    <!-- parole -->
     <div class="flex flex-col gap-1">
-      <label for="password" class="text-sm text-neutral-400">Parole</label>
-      <input type="password" id="password" formControlName="password" class="input" placeholder="••••••••" />
+      <label for="password" class="text-[16px] text-white">Parole</label>
+      <input type="password" id="password" formControlName="password"
+             class="input"
+             placeholder="••••••••" />
       <p class="text-red-500 text-sm" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
-        Parolei jābūt vismaz 8 simboliem, jābūt lielam burtam un ciparam
+        Parolei jābūt vismaz 8 simboliem, jābūt vismaz vienam lielam burtam un ciparam
       </p>
     </div>
 
-    <!-- Confirm password -->
+    <!-- atkarto paroli -->
     <div class="flex flex-col gap-1">
-      <label for="confirmPassword" class="text-sm text-neutral-400">Atkārtot paroli</label>
-      <input type="password" id="confirmPassword" formControlName="confirmPassword" class="input" placeholder="••••••••" />
+      <label for="confirmPassword" class="text-[16px] text-white">Atkārtot paroli</label>
+      <input type="password" id="confirmPassword" formControlName="confirmPassword"
+             class="input"
+             placeholder="••••••••" />
       <p class="text-red-500 text-sm" *ngIf="registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched">
         Paroles nesakrīt
       </p>
+      <p class="text-[12px] text-gray-2 font-medium">Vismaz 8 rakstzīmes</p>
+
     </div>
 
-    <!-- Button -->
-    <button type="submit" class="btn-green">
+    <!-- Poga talak -->
+    <button
+      type="submit"
+      class="btn-green disabled:bg-gray-600 disabled:text-gray-300 disabled:cursor-not-allowed"
+      [disabled]="!registerForm.valid || usernameAvailable === false || emailAvailable === false || loading"
+    >
       <span>Turpināt</span>
       <div *ngIf="loading" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
     </button>
+
   </form>
 </div>
 
-<!-- 2 SOLIS : Foto -->
-<div *ngIf="step === 2" class="flex flex-col items-center gap-6 px-10 py-10 text-white">
-  <h2 class="text-3xl font-semibold text-center">Profila bilde</h2>
 
-  <div class="w-40 h-40 rounded-full overflow-hidden border-4 border-green-500">
-    <img *ngIf="photoPreviewUrl; else placeholder" [src]="photoPreviewUrl" class="w-full h-full object-cover" />
-    <ng-template #placeholder>
-      <div class="w-full h-full bg-neutral-700 flex items-center justify-center text-sm text-neutral-400">
-        Nav attēla
+
+
+
+<!-- 2 SOLIS Attels -->
+<div *ngIf="step === 2" class="w-full h-full px-10 py-10 overflow-y-auto scrollbar-hide items-center ">
+  <div class="mt-10 flex flex-col w-full max-w-md mx-auto items-center">
+    <h2 class="text-[36px] font-medium text-center text-white">Pievieno savu profila attēlu</h2>
+    <p class="text-[16px] font-regular text-[#D0D0D0]">Tavs attēls būs redzams citiem lietotājiem Sonora</p>
+
+    <!-- preview blokā -->
+    <div class="w-[262px] h-[262px] flex justify-center items-center mt-10 rounded-[8px] bg-dark-1 overflow-hidden outline outline-1 outline-gray-3 outline-dashed cursor-pointer"
+         (click)="fileInput.click()">
+      <ng-container *ngIf="photoPreviewUrl; else uploadPlaceholder">
+        <img [src]="photoPreviewUrl" class="w-full h-full object-cover" />
+      </ng-container>
+
+      <ng-template #uploadPlaceholder>
+        <div class="flex flex-col justify-center items-center text-center px-4">
+          <svg width="80px" height="80px" class="stroke-current text-gray-2 mb-2" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 21H3.6C3.26863 21 3 20.7314 3 20.4V3.6C3 3.26863 3.26863 3 3.6 3H20.4C20.7314 3 21 3.26863 21 3.6V13"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M3 16L10 13L15.5 15.5"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M16 10C14.8954 10 14 9.10457 14 8C14 6.89543 14.8954 6 16 6C17.1046 6 18 6.89543 18 8C18 9.10457 17.1046 10 16 10Z"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M16 19H19M22 19H19M19 19V16M19 19V22"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <p class="font-medium text-gray-2 text-[16px]">Noklikšķini vai ievelc attēlu šeit</p>
+          <p class="font-medium text-[#626262] text-[12px]">PNG, JPG (līdz 10 MB)</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- input neredzams -->
+    <input type="file" accept="image/png, image/jpeg" class="hidden" #fileInput (change)="onPhotoSelected($event)" />
+
+    <!-- kļūda -->
+    <p *ngIf="photoError" class="text-red-500 text-sm mt-2">{{ photoError }}</p>
+
+
+    <!-- pogas -->
+    <div class="flex w-full gap-[8px] mt-6 justify-center items-center relative">
+      <!-- talak -->
+      <button
+        (click)="goToGenresStep()"
+        class="btn-green disabled:bg-gray-600 disabled:text-gray-300 disabled:cursor-not-allowed"
+        [disabled]="!selectedPhotoFile || photoError"
+      >
+        Turpināt
+      </button>
+
+
+      <!-- Izlaist ar popup zem pogas -->
+      <div class="relative w-full flex flex-col items-center group">
+        <button (click)="goToGenresStep()" class="btn-skip relative z-10">
+          Izlaist
+        </button>
+
+        <!-- popop -->
+        <div class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-[240px] bg-gray-4/80 text-sm text-white font-medium text-center px-4 py-3 rounded-lg opacity-0 group-hover:opacity-100 transition pointer-events-none z-0">
+          Vari turpināt arī bez attēla — to varēsi pievienot vēlāk
+        </div>
       </div>
-    </ng-template>
+
+    </div>
   </div>
+</div>
 
-  <label class="cursor-pointer bg-neutral-700 hover:bg-neutral-600 px-4 py-2 rounded-xl transition">
-    Izvēlēties attēlu
-    <input type="file" accept="image/png, image/jpeg" class="hidden" (change)="onPhotoSelected($event)" />
-  </label>
 
-  <button (click)="goToGenresStep()" class="btn-green">
-    Turpināt
-  </button>
+
+<!-- 3 SOLIS Žanri -->
+<div *ngIf="step === 3" class="w-full h-full py-10 overflow-y-auto scrollbar-hide items-center ">
+  <div class=" flex flex-col w-full max-w-md mx-auto items-center">
+    <h2 class="text-[36px] font-medium text-center text-white leading-none mb-1">Izvēlies savus mīļākos žanrus</h2>
+    <p class="text-[16px] font-regular text-[#D0D0D0]">Palīdzi Sonora saprast tavu gaumi un piedāvāt tev atbilstošu mūziku</p>
+
+    <!-- žanri -->
+    <div class="relative w-full max-h-[580px] mt-6">
+      <!-- skrolls -->
+      <div class="overflow-y-auto pr-1 p-1 scrollbar-hide max-h-[470px]">
+        <div class="grid grid-cols-3 gap-3">
+          <div
+            *ngFor="let genre of genres"
+            (click)="toggleGenre(genre.id)"
+            class="w-full aspect-square cursor-pointer rounded-[8px] pt-4 px-4 leading-none text-white font-bold text-[16px]"
+            [ngStyle]="{
+              'background-color': genreColors[genre.id],
+              'outline': selectedGenres.includes(genre.id) ? '1px solid white' : 'none'
+            }"
+            [ngClass]="{
+              'saturate-150': selectedGenres.includes(genre.id)
+            }"
+          >
+            {{ genre.name }}
+          </div>
+
+        </div>
+      </div>
+
+      <!-- gradients leja -->
+      <div class="pointer-events-none absolute bottom-0 left-0 w-full h-12 bg-gradient-to-b from-dark-3/0 to-[#0e100e] z-10 "></div>
+    </div>
+
+    <!-- pogas -->
+    <div class="flex w-full gap-[8px] mt-2 justify-center items-center relative">
+      <!-- talak -->
+      <div class="relative w-full flex flex-col items-center group">
+        <button
+          (click)="goToArtistsStep()"
+          class="btn-green disabled:bg-gray-600 disabled:text-gray-300 disabled:cursor-not-allowed w-full"
+          [disabled]="selectedGenres.length < 3"
+        >
+          Turpināt
+        </button>
+
+
+        <!-- popop -->
+        <div class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-[240px] bg-gray-4/80 text-sm text-white font-medium text-center px-4 py-3 rounded-lg opacity-0 group-hover:opacity-100 transition pointer-events-none z-0">
+          Izvēlies vismaz 3 žanrus, lai turpinātu
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- 4 SOLIS: Artisti -->
+<div *ngIf="step === 4" class="w-full h-full py-10 overflow-y-auto items-center px-10">
+  <div class="flex flex-col w-full max-w-md mx-auto items-center">
+    <h2 class="text-[36px] font-medium text-center text-white leading-none mb-1">Izvēlies savus mīļākos artistus</h2>
+    <p class="text-[16px] text-[#D0D0D0]">Balstoties uz tavām izvēlēm, mēs pielāgosim ieteikumus tev</p>
+
+    <!-- Skrollojamais saraksts -->
+    <div class="relative w-full max-h-[500px] min-h-[220px] mt-8">
+      <div class="overflow-y-auto pr-1 p-1 scrollbar-hide max-h-[510px]">
+        <p *ngIf="artists.length === 0" class="text-gray-1 text-[16px] mt-4 text-center mb-14">
+          Diemžēl nav atrasti neviens mākslinieks ar izvēlētajiem žanriem.
+        </p>
+        <div class="grid grid-cols-3 gap-3">
+          <div
+            *ngFor="let artist of artists"
+            (click)="toggleArtist(artist.id)"
+            class="flex flex-col items-start cursor-pointer"
+          >
+            <!-- attels -->
+            <div
+              class="w-full aspect-square rounded-full overflow-hidden relative"
+              [class.outline]="selectedArtists.includes(artist.id)"
+              [class.outline-white]="selectedArtists.includes(artist.id)"
+              [class.outline-2]="selectedArtists.includes(artist.id)"
+            >
+              <img
+                *ngIf="artist.primary_photo"
+                [src]="'http://127.0.0.1:8000/' + artist.primary_photo.photo_url"
+                alt="{{ artist.username }}"
+                class="w-full h-full object-cover"
+              >
+            </div>
+
+            <!-- lietotajvards -->
+            <div class="mt-2 text-white font-semibold text-[16px] truncate w-full text-left px-1">
+              {{ artist.username }}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Gradients leja -->
+      <div class="pointer-events-none absolute bottom-0 left-0 w-full h-12 bg-gradient-to-b from-dark-3/0 to-[#0e100e] z-10 "></div>
+    </div>
+
+    <!-- pogas -->
+    <div class="flex w-full gap-[8px] mt-6 justify-center items-center relative">
+      <!-- talak -->
+      <button
+        (click)="submitRegistration()"
+        class="btn-green disabled:bg-gray-600 disabled:text-gray-300 disabled:cursor-not-allowed"
+      [disabled]="selectedArtists.length === 0"
+      >
+      Pabeigt reģistrāciju
+      </button>
+
+      <!-- Izlaist ar popup zem pogas -->
+      <div class="relative w-full flex flex-col items-center group">
+        <button class="btn-skip relative z-10"
+                (click)="submitRegistration()"
+        >
+          Izlaist un pabeigt
+        </button>
+
+        <!-- popup -->
+        <div class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-[240px] bg-gray-4/80 text-sm text-white font-medium text-center px-4 py-3 rounded-lg opacity-0 group-hover:opacity-100 transition pointer-events-none z-0">
+          Šis solis nav obligāts, vari to izlaist
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>

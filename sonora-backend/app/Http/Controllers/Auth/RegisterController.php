@@ -97,6 +97,18 @@ class RegisterController extends Controller
         return response()->json(['message' => 'Lietotājs veiksmīgi reģistrēts'], 201);
     }
 
+    public function checkEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|max:100',
+        ]);
+
+        $exists = User::where('email', $request->email)->exists();
+
+        return response()->json(['available' => !$exists]);
+    }
+
+
     public function checkUsername(Request $request)
     {
         $request->validate([

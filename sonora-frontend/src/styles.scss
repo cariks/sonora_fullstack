@@ -16,7 +16,7 @@ $sonora-theme: mat.define-dark-theme((
   density: 0,
 ));
 
-// ✅ Aktivē tēmu visiem Angular Material komponentiem
+// Aktivē tēmu visiem Angular Material komponentiem
 @include mat.all-component-themes($sonora-theme);
 
 
@@ -67,6 +67,13 @@ $sonora-theme: mat.define-dark-theme((
 
 @font-face {
   font-family: 'SF Pro Display';
+  src: url('/assets/fonts/fonnts.com-SF_Pro_Display_Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
   src: url('/assets/fonts/fonnts.com-SF_Pro_Display_Medium.ttf') format('truetype');
   font-weight: 500;
   font-style: normal;
@@ -78,6 +85,7 @@ $sonora-theme: mat.define-dark-theme((
   font-weight: 600;
   font-style: normal;
 }
+
 
 @font-face {
   font-family: 'SF Pro Display';
@@ -112,6 +120,11 @@ html, body{
   margin: 0;
   height: 100%;
   width: 100%;
+  overflow: hidden;
+}
+
+#app, app-root {
+  height: 100%;
 }
 
 body.no-transition * {
@@ -120,10 +133,10 @@ body.no-transition * {
 
 @keyframes bounceWidth {
   0%    { transform: scaleX(1); }
-  25%   { transform: scaleX(1.025); }  // первый толчок
-  55%   { transform: scaleX(0.99); }   // спад
-  75%   { transform: scaleX(1.012); }  // второй мягкий отскок
-  100%  { transform: scaleX(1); }      // очень мягкий возврат
+  25%   { transform: scaleX(1.025); }
+  55%   { transform: scaleX(0.99); }
+  75%   { transform: scaleX(1.012); }
+  100%  { transform: scaleX(1); }
 }
 
 .bounce {

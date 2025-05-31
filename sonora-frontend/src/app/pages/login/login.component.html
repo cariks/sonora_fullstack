@@ -1,16 +1,17 @@
-<div class="flex flex-col w-full px-10 py-10 overflow-y-auto scrollbar-hide">
-  <h2 class="text-4xl font-semibold text-center mb-10 text-white">Laipni lūgts atpakaļ!</h2>
+<div class="flex flex-col w-full px-10 py-10 overflow-y-auto scrollbar-hide items-center mt-14">
+  <h2 class="text-[36px] font-medium text-center text-white">Pieslēdzies savam kontam</h2>
+  <p class="text-[16px] font-regular text-[#D0D0D0]">Ievadi savu e-pastu un paroli, lai turpinātu klausīties</p>
 
-  <form #form="ngForm" (ngSubmit)="login()" class="flex flex-col gap-6 w-full max-w-md mx-auto">
+  <form #form="ngForm" (ngSubmit)="login()" class="mt-10 flex flex-col gap-6 w-full max-w-md mx-auto">
     <!-- Email -->
     <div class="flex flex-col gap-1">
-      <label for="email" class="text-sm text-neutral-400">E-pasts</label>
+      <label for="email" class="text-[16px] text-white">E-pasts</label>
       <input
         type="email"
         id="email"
         [(ngModel)]="email"
         name="email"
-        class="w-full px-4 py-2 bg-neutral-800/80 text-white border border-neutral-700 rounded-[20px] focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+        class="w-full h-[48px] placeholder-gray-2 bg-dark-1 pl-[18px] text-white border border-gray-4 rounded-[8px] focus:outline-none focus:ring-1 focus:ring-gray-1 transition"
         placeholder="tavs@email.com"
         required
       />
@@ -18,46 +19,46 @@
 
     <!-- Password -->
     <div class="flex flex-col gap-1">
-      <label for="password" class="text-sm text-neutral-400">Parole</label>
+      <label for="password" class="text-[16px] text-white">Parole</label>
       <input
         type="password"
         id="password"
         [(ngModel)]="password"
         name="password"
-        class="w-full px-4 py-2 bg-neutral-800/80 text-white border border-neutral-700 rounded-[20px] focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+        class="w-full h-[48px] placeholder-gray-2 bg-dark-1 pl-[18px] text-white border border-gray-4 rounded-[8px] focus:outline-none focus:ring-1 focus:ring-gray-1 transition"
         placeholder="••••••••"
         required
       />
     </div>
 
-    <!-- Remember me -->
-    <div class="flex items-center gap-2">
-      <input
-        type="checkbox"
-        id="rememberMe"
-        [(ngModel)]="rememberMe"
-        name="rememberMe"
-        class="accent-green-500"
-      />
-      <label for="rememberMe" class="text-sm text-neutral-400">Atcerēties mani</label>
-    </div>
+<!--    &lt;!&ndash; Remember me &ndash;&gt;-->
+<!--    <div class="flex items-center gap-2">-->
+<!--      <input-->
+<!--        type="checkbox"-->
+<!--        id="rememberMe"-->
+<!--        [(ngModel)]="rememberMe"-->
+<!--        name="rememberMe"-->
+<!--        class="accent-green-500"-->
+<!--      />-->
+<!--      <label for="rememberMe" class="text-sm text-neutral-400">Atcerēties mani</label>-->
+<!--    </div>-->
 
     <!-- Submit button -->
     <button
       type="submit"
       [disabled]="loading"
-      class="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 transition-all duration-200 text-white font-semibold py-2 px-6 rounded-[20px] shadow-lg shadow-green-500/20 hover:shadow-green-500/30"
+      class="mt-10 w-full h-[56px] flex items-center justify-center gap-2 bg-white hover:text-gray-2  transition-all duration-300 text-dark-3 font-medium  rounded-[8px] "
     >
       <span>Pieslēgties</span>
 
       <div *ngIf="loading">
-        <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        <div class="w-4 h-4 border-2 border-gray-2 border-t-transparent rounded-full animate-spin"></div>
       </div>
     </button>
 
 
 
     <!-- Error -->
-    <p *ngIf="error" class="text-red-400 text-sm text-center mt-2">{{ error }}</p>
+    <p *ngIf="error" class="text-red-400 text-sm text-center">{{ error }}</p>
   </form>
 </div>

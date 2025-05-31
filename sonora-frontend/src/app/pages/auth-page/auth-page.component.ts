@@ -1,18 +1,39 @@
-import { Component } from '@angular/core';
-import {Router} from "@angular/router";
+import { Component, ViewChild, AfterViewChecked } from '@angular/core';
+import { RegisterComponent } from '../register/register.component';
+import { Router } from '@angular/router';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-auth-page',
   templateUrl: './auth-page.component.html',
   styleUrl: './auth-page.component.scss'
 })
-export class AuthPageComponent {
-  view: 'login' | 'register' = 'login';
+export class AuthPageComponent implements AfterViewChecked {
+  view: 'login' | 'register' = 'register';
+  currentStep = 1;
+
+  @ViewChild(RegisterComponent)
+  registerComponent?: RegisterComponent;
+
+  constructor(private router: Router, private cdRef: ChangeDetectorRef) {}
+
+  ngAfterViewChecked() {
+    if (this.view === 'register' && this.registerComponent && this.currentStep !== this.registerComponent.step) {
+      this.currentStep = this.registerComponent.step;
+      this.cdRef.detectChanges(); // gaidam current step
+    }
+  }
+
+  stepLabels = [
+    'Izveido kontu un lietotājvārdu',
+    'Izvēlies savu foto',
+    'Izvēlies iecienītākos žanrus',
+    'Atrodi savus mīļākos artistus'
+  ];
+
   playAnimation = false;
   fadeForms = false;
   isLoading = false;
-
-  constructor(private router: Router) {}
 
   handleSuccess() {
     this.isLoading = true;

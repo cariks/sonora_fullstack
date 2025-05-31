@@ -26,9 +26,12 @@ use App\Http\Controllers\ArtistGenreController;
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
 
-Route::post('/register', [\App\Http\Controllers\Auth\RegisterController::class, 'register']);
+Route::post('/register', [RegisterController::class, 'register']);
+
+Route::get('/check-email', [RegisterController::class, 'checkEmail']);
 Route::get('/check-username', [RegisterController::class, 'checkUsername']);
 
+Route::get('/genres', [\App\Http\Controllers\GenreController::class, 'index']);
 Route::post('/suggested-artists', [ArtistGenreController::class, 'getSuggestedArtists']);
 
 

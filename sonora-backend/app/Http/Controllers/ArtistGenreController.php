@@ -32,7 +32,7 @@ class ArtistGenreController extends Controller
         $genreIds = $validated['genre_ids'];
 
         $artistIds = ArtistGenre::whereIn('genre_id', $genreIds)
-            ->pluck('user_id')
+            ->pluck('artist_id')
             ->unique();
 
         $artists = User::whereIn('id', $artistIds)
