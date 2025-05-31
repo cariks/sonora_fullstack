@@ -12,73 +12,76 @@
     [ngClass]="bounceClass"
   >
     <!-- Scrollable content wrapper -->
-    <div class="p-6 flex flex-col gap-6 min-h-full">
+    <div class="p-6 flex flex-col gap-2 min-h-full">
 
       <!-- Current track info -->
-      <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-3 pt-3">
         <img
           [src]="currentTrack?.cover_image || 'assets/blank_cover.png'"
-          class="w-full max-w-[500px] aspect-square object-cover rounded shadow mx-auto"
+          class="w-full max-w-[587px] aspect-square object-cover rounded rounded-[8px] shadow mx-auto"
           alt="Cover"
         />
 
-        <div class="">
-          <p class="text-base font-semibold truncate max-w-[90%] ">
-            {{ currentTrack?.title || 'Nav izvēlēta dziesma' }}
-          </p>
-          <p class="text-sm text-neutral-400 truncate max-w-[90%]" *ngIf="currentTrack?.artist_name">
-            {{ currentTrack.artist_name }}
-          </p>
+
+        <!-- Info-->
+        <div class="flex justify-between gap-3 pt-2 pb-1">
+
+          <div class="flex flex-col w-full">
+            <p class="text-[27px] font-semibold truncate max-w-[90%] leading-[32px]">
+              {{ currentTrack?.title || 'Nav izvēlēta dziesma' }}
+            </p>
+            <p class="text-[16px] font-medium text-gray-1 truncate max-w-[90%]" *ngIf="currentTrack?.artist_name">
+              {{ currentTrack.artist_name }}
+            </p>
+          </div>
+
+
+
+          <div class="flex items-center gap-1">
+            <!-- Like -->
+            <button (click)="likeTrack()" [ngClass]="{'opacity-100': likeStatus === 'like', 'opacity-100 hover:opacity-800': likeStatus !== 'like'}" class="transition-opacity duration-200">
+              <svg *ngIf="likeStatus !== 'like'" width="36" height="36" stroke-width="1.5" viewBox="0 0 24 24" fill="none"
+                   xmlns="http://www.w3.org/2000/svg" color="#FFFFFF">
+                <path d="M8 12H12M16 12H12M12 12V8M12 12V16" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"
+                      stroke-linejoin="round"></path>
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                      stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+              <svg *ngIf="likeStatus === 'like'" width="36" height="36" viewBox="0 0 24 24" fill="black"
+                   xmlns="http://www.w3.org/2000/svg" stroke-width="1.5">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M12 1.25C6.06294 1.25 1.25 6.06294 1.25 12C1.25 17.9371 6.06294 22.75 12 22.75C17.9371 22.75 22.75 17.9371 22.75 12C22.75 6.06294 17.9371 1.25 12 1.25ZM12.75 8C12.75 7.58579 12.4142 7.25 12 7.25C11.5858 7.25 11.25 7.58579 11.25 8V11.25H8C7.58579 11.25 7.25 11.5858 7.25 12C7.25 12.4142 7.58579 12.75 8 12.75H11.25V16C11.25 16.4142 11.5858 16.75 12 16.75C12.4142 16.75 12.75 16.4142 12.75 16V12.75H16C16.4142 12.75 16.75 12.4142 16.75 12C16.75 11.5858 16.4142 11.25 16 11.25H12.75V8Z"
+                      fill="#FFFFFF"></path>
+              </svg>
+            </button>
+
+            <!-- Dislike button -->
+            <button (click)="dislikeTrack()" [ngClass]="{'opacity-100': likeStatus === 'dislike', 'opacity-100 hover:opacity-800': likeStatus !== 'dislike'}" class="transition-opacity duration-200">
+              <svg *ngIf="likeStatus !== 'dislike'" width="36" height="36" stroke-width="1.5" viewBox="0 0 24 24" fill="none"
+                   xmlns="http://www.w3.org/2000/svg" color="#FFFFFF">
+                <path d="M8 12H16" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                      stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+
+              <svg *ngIf="likeStatus === 'dislike'" width="36" height="36" viewBox="0 0 24 24" fill="white"
+                   xmlns="http://www.w3.org/2000/svg" stroke-width="1.5">
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                      d="M12 1.25C6.06294 1.25 1.25 6.06294 1.25 12C1.25 17.9371 6.06294 22.75 12 22.75C17.9371 22.75 22.75 17.9371 22.75 12C22.75 6.06294 17.9371 1.25 12 1.25ZM8 11.25C7.58579 11.25 7.25 11.5858 7.25 12C7.25 12.4142 7.58579 12.75 8 12.75H16C16.4142 12.75 16.75 12.4142 16.75 12C16.75 11.5858 16.4142 11.25 16 11.25H8Z"
+                      fill="#FFFFFF"></path>
+              </svg>
+            </button>
+
+          </div>
         </div>
-
-        <!--
-        <div class="mt-2 text-xs text-neutral-300 space-y-1 text-center">
-          <p *ngIf="currentTrack?.bpm">BPM: {{ currentTrack.bpm }}</p>
-          <p *ngIf="currentTrack?.key">Tonalitāte: {{ currentTrack.key }}</p>
-        </div>
-        -->
       </div>
 
-
-      <div class="flex items-center gap-4">
-        <!-- Like button -->
-        <button (click)="likeTrack()" [class.text-green-500]="likeStatus === 'like'">
-          <i class="fas fa-thumbs-up"></i>
-        </button>
-
-        <!-- Dislike button -->
-        <button (click)="dislikeTrack()" [class.text-red-500]="likeStatus === 'dislike'">
-          <i class="fas fa-thumbs-down"></i>
-        </button>
-      </div>
-
-      <!-- Controls -->
-      <div class="flex items-center justify-center gap-6">
-        <button
-          (click)="togglePlay()"
-          class="w-12 h-12 flex items-center justify-center text-white bg-green-500 rounded-full shadow hover:bg-green-400 transition"
-        >
-          <i class="fas text-lg" [ngClass]="isPlaying ? 'fa-pause' : 'fa-play'"></i>
-        </button>
-      </div>
-
-      <!-- Volume Control -->
-      <div class="w-full flex items-center gap-3">
-        <i class="fas fa-volume-down text-neutral-400 text-sm"></i>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          [value]="volume"
-          (input)="onVolumeInput($event)"
-          (mouseup)="onVolumeCommit($event)"
-          (touchend)="onVolumeCommit($event)"
-          class="flex-1 appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"
-        />
-        <i class="fas fa-volume-up text-neutral-400 text-sm"></i>
-      </div>
-
+      <!--
+<div class="mt-2 text-xs text-neutral-300 space-y-1 text-center">
+  <p *ngIf="currentTrack?.bpm">BPM: {{ currentTrack.bpm }}</p>
+  <p *ngIf="currentTrack?.key">Tonalitāte: {{ currentTrack.key }}</p>
+</div>
+-->
       <!-- Progress Bar -->
       <div class="w-full">
         <input
@@ -90,16 +93,116 @@
           (change)="onSeekEnd()"
           (mousedown)="isSeeking = true"
           (mouseup)="onSeekEnd()"
-          class="w-full appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"
+          class="w-full appearance-none h-[6px] bg-neutral-700 rounded-full cursor-pointer custom-range"
         />
-        <div class="flex justify-between text-xs text-neutral-400 mt-1">
+        <div class="flex justify-between font-medium text-[12px] text-gray-2 mt-[2px]">
           <span>{{ formatTime(currentTime) }}</span>
           <span>{{ formatTime(duration) }}</span>
         </div>
       </div>
 
+
+      <!-- Pogas utt -->
+      <div class="w-full flex items-center justify-between mb-6">
+
+        <!-- Effects Poga (1/3) -->
+        <div class="w-1/3 flex justify-start gap-6">
+          <button
+            class="w-[48px] h-[48px] bg-dark-1 rounded-[8px] flex items-center justify-center text-white hover:bg-neutral-700 transition"
+          >
+            <svg width="28px" height="28px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF" stroke-width="1.5"><path d="M8 15C12.8747 15 15 12.949 15 8C15 12.949 17.1104 15 22 15C17.1104 15 15 17.1104 15 22C15 17.1104 12.8747 15 8 15Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.5" stroke-linejoin="round"></path><path d="M2 6.5C5.13376 6.5 6.5 5.18153 6.5 2C6.5 5.18153 7.85669 6.5 11 6.5C7.85669 6.5 6.5 7.85669 6.5 11C6.5 7.85669 5.13376 6.5 2 6.5Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+          </button>
+
+          <button>
+            <svg width="34px" height="34px" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF"><path d="M22 6.99999C19 6.99999 13.5 6.99999 11.5 12.5C9.5 18 5 18 2 18" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 5C20 5 21.219 6.21895 22 7C21.219 7.78105 20 9 20 9" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M22 18C19 18 13.5 18 11.5 12.5C9.5 6.99999 5 7.00001 2 7" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 20C20 20 21.219 18.781 22 18C21.219 17.219 20 16 20 16" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </button>
+          <button>
+            <svg width="34px" height="34px" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF"><path d="M17 17H8C6.33333 17 3 16 3 12C3 8 6.33333 7 8 7H16C17.6667 7 21 8 21 12C21 13.4943 20.5348 14.57 19.865 15.3312" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M14.5 14.5L17 17L14.5 19.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </button>
+        </div>
+
+        <!-- Playback Controls (1/3) -->
+        <div class="w-1/3 flex justify-center">
+          <div class="flex items-center gap-4">
+            <!-- Backward -->
+            <button class="w-[48px] h-[48px] flex items-center justify-center text-white hover:text-[#AAAAAA] transition">
+              <svg width="44px" height="44px" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-width="1.5">
+                <path d="M6 17V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M17.0282 18.7328C17.4217 19.0434 18 18.7632 18 18.2619V5.73813C18 5.23682 17.4217 4.95657 17.0282 5.2672L9.09652 11.5291C8.79217 11.7693 8.79217 12.2307 9.09652 12.4709L17.0282 18.7328Z"
+                      fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+
+            <!-- Play/Pauza -->
+            <button
+              (click)="togglePlay()"
+              class="w-[64px] h-[64px] flex items-center justify-center text-[#171717] bg-white rounded-full hover:bg-[#E8E8E8] transition"
+            >
+              <i
+                class="fas text-3xl"
+                [ngClass]="{
+            'fa-play pl-[4px]': !isPlaying,
+            'fa-pause': isPlaying
+          }"
+              ></i>
+            </button>
+
+            <!-- Talak -->
+            <button class="w-[48px] h-[48px] flex items-center justify-center text-white hover:text-[#AAAAAA] transition">
+              <svg width="44px" height="44px" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-width="1.5">
+                <path d="M18 7V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M6.97179 5.2672C6.57832 4.95657 6 5.23682 6 5.73813V18.2619C6 18.7632 6.57832 19.0434 6.97179 18.7328L14.9035 12.4709C15.2078 12.2307 15.2078 11.7693 14.9035 11.5291L6.97179 5.2672Z"
+                      fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                </path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Skalums -->
+        <div class="w-1/3 flex justify-end pl-12">
+          <div class="flex items-center gap-2 w-full">
+            <svg width="24px" height="24px" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.9697 6.96967C17.2626 6.67678 17.7374 6.67678 18.0303 6.96967L17.5 7.5C18.0303 6.96967 18.0306 6.96989 18.0308 6.97012L18.0313 6.9706L18.0323 6.97168L18.0349 6.97426L18.0416 6.98113L18.0613 7.00165C18.0771 7.01833 18.0982 7.04101 18.1237 7.06959C18.1747 7.1267 18.2439 7.20756 18.325 7.31121C18.487 7.51816 18.6983 7.8181 18.9084 8.20336C19.3286 8.97364 19.75 10.0966 19.75 11.5C19.75 12.9034 19.3286 14.0264 18.9084 14.7966C18.6983 15.1819 18.487 15.4818 18.325 15.6888C18.2439 15.7924 18.1747 15.8733 18.1237 15.9304C18.0982 15.959 18.0771 15.9817 18.0613 15.9984L18.0416 16.0189L18.0349 16.0257L18.0323 16.0283L18.0313 16.0294L18.0308 16.0299C18.0306 16.0301 18.0303 16.0303 17.5207 15.5207L18.0303 16.0303C17.7374 16.3232 17.2626 16.3232 16.9697 16.0303C16.6776 15.7383 16.6768 15.2654 16.9671 14.9723C16.9679 14.9714 16.9688 14.9705 16.9697 14.9697L17.5 15.5C16.9697 14.9697 16.9695 14.9699 16.9693 14.9701L16.9689 14.9705L16.9682 14.9711L16.9673 14.9721L16.9724 14.9667C16.9786 14.9602 16.9897 14.9482 17.0052 14.9309C17.0362 14.8962 17.0842 14.8404 17.1437 14.7643C17.263 14.6119 17.4267 14.3806 17.5916 14.0784C17.9214 13.4736 18.25 12.5966 18.25 11.5C18.25 10.4034 17.9214 9.52636 17.5916 8.92164C17.4267 8.6194 17.263 8.38809 17.1437 8.23567C17.0842 8.15963 17.0362 8.10377 17.0052 8.06908C16.9897 8.05176 16.9786 8.03978 16.9724 8.03326L16.9671 8.02774C16.6768 7.73464 16.6776 7.2617 16.9697 6.96967Z" fill="#FFFFFF"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M19.9697 3.96967C20.2626 3.67678 20.7374 3.67678 21.0303 3.96967L20.5 4.5C21.0303 3.96967 21.0306 3.96991 21.0308 3.97017L21.0314 3.97072L21.0327 3.972L21.0359 3.97527L21.045 3.98462C21.0523 3.9921 21.0619 4.00207 21.0736 4.01451C21.0971 4.03939 21.1292 4.0742 21.1688 4.11882C21.2478 4.20802 21.3566 4.33662 21.4851 4.50365C21.7419 4.83749 22.0786 5.32653 22.4137 5.96319C23.0845 7.23773 23.75 9.10689 23.75 11.5C23.75 13.8931 23.0845 15.7623 22.4137 17.0368C22.0786 17.6735 21.7419 18.1625 21.4851 18.4963C21.3566 18.6634 21.2478 18.792 21.1688 18.8812C21.1292 18.9258 21.0971 18.9606 21.0736 18.9855C21.0619 18.9979 21.0523 19.0079 21.045 19.0154L21.0359 19.0247L21.0327 19.028L21.0314 19.0293L21.0308 19.0298C21.0306 19.0301 21.0303 19.0303 20.5 18.5L21.0303 19.0303C20.7374 19.3232 20.2626 19.3232 19.9697 19.0303C19.6771 18.7378 19.6768 18.2636 19.9687 17.9706C19.9688 17.9706 19.9689 17.9705 19.969 17.9704L19.9689 17.9705L19.9687 17.9706L19.9683 17.9711L19.9678 17.9716C19.9679 17.9714 19.9684 17.9709 19.9693 17.97L19.9825 17.9562C19.9957 17.9422 20.0173 17.9189 20.0461 17.8864C20.1038 17.8213 20.1903 17.7194 20.2962 17.5818C20.5081 17.3062 20.7964 16.889 21.0863 16.3382C21.6655 15.2377 22.25 13.6069 22.25 11.5C22.25 9.39311 21.6655 7.76227 21.0863 6.66181C20.7964 6.11097 20.5081 5.69376 20.2962 5.41822C20.1903 5.28057 20.1038 5.17869 20.0461 5.1136C20.0173 5.08107 19.9957 5.05777 19.9825 5.04384L19.9693 5.03C19.9683 5.02899 19.9678 5.02845 19.9677 5.02839L19.9683 5.02891L19.9689 5.02951L19.9692 5.02989C19.6768 4.73696 19.6769 4.26242 19.9697 3.96967ZM19.9677 5.02838C19.9677 5.02838 19.9677 5.02838 19.9677 5.02839L19.9677 5.02838Z" fill="#FFFFFF"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0367 3.3964C13.2002 2.62923 14.75 3.46373 14.75 4.85741V19.1431C14.75 20.5368 13.2002 21.3713 12.0367 20.6041L6.03762 16.6487C5.99677 16.6218 5.94892 16.6074 5.9 16.6074H3C1.48122 16.6074 0.25 15.3762 0.25 13.8574V10.1431C0.25 8.62434 1.48122 7.39313 3 7.39313H5.9C5.94892 7.39313 5.99677 7.37877 6.03762 7.35184L12.0367 3.3964Z" fill="#FFFFFF"></path></svg>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              [value]="volume"
+              (input)="onVolumeInput($event)"
+              (mouseup)="onVolumeCommit($event)"
+              (touchend)="onVolumeCommit($event)"
+              class="w-full appearance-none h-[6px] bg-neutral-700 rounded-full cursor-pointer custom-range"
+            />
+          </div>
+        </div>
+
+      </div>
+
+
+
+
+      <!--      &lt;!&ndash; Volume Control &ndash;&gt;-->
+<!--      <div class="w-full flex items-center gap-3">-->
+<!--        <i class="fas fa-volume-down text-neutral-400 text-sm"></i>-->
+<!--        <input-->
+<!--          type="range"-->
+<!--          min="0"-->
+<!--          max="1"-->
+<!--          step="0.01"-->
+<!--          [value]="volume"-->
+<!--          (input)="onVolumeInput($event)"-->
+<!--          (mouseup)="onVolumeCommit($event)"-->
+<!--          (touchend)="onVolumeCommit($event)"-->
+<!--          class="flex-1 appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"-->
+<!--        />-->
+<!--        <i class="fas fa-volume-up text-neutral-400 text-sm"></i>-->
+<!--      </div>-->
+
+
+
       <!-- Stems režīms -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 mt-10">
         <label class="text-sm font-semibold">Stems režīms</label>
         <!-- Custom Stems Toggle -->
         <label class="relative inline-flex items-center cursor-pointer">

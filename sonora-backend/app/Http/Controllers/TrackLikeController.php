@@ -45,12 +45,12 @@ class TrackLikeController extends Controller
     {
         $user = Auth::user();
 
-        $like = \App\Models\TrackLike::where('user_id', $user->id)
+        $like = TrackLike::where('user_id', $user->id)
             ->where('track_id', $trackId)
             ->first();
 
         return response()->json([
-            'status' => $like?->like_status, // var but like/dislike/null
-        ]);
+            'like_status' => $like?->like_status // like/dislike vai null
+        ], 200);
     }
 }

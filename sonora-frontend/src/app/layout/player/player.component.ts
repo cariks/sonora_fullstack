@@ -5,6 +5,8 @@ import { Subscription } from 'rxjs';
 import { StemsMixerService } from '../../services/stems-mixer.service';
 import { ViewChildren, QueryList } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
+import { TrackLikesService } from '../../services/track-likes.service';
+import { AuthService } from '../../services/auth.service';
 
 // Komponents, kas atbild par mūzikas atskaņošanu un playera interfeisu
 @Component({
@@ -43,6 +45,13 @@ export class PlayerComponent {
   private stemVolumeTimers: { [key: string]: any } = {};
   private mainVolumeTimer: any = null;
 
+  likeTrack() {
+    this.setLikeStatus('like');
+  }
+
+  dislikeTrack() {
+    this.setLikeStatus('dislike');
+  }
 
   private activeFadeTimers: Map<HTMLAudioElement, any> = new Map();
 
@@ -79,10 +88,10 @@ export class PlayerComponent {
 
 
 
-  playerWidth = 474;
-  readonly defaultWidth = 474;
+  playerWidth = 642;
+  readonly defaultWidth = 642;
   isResizing = false;
-  minWidth = 280;
+  minWidth = 420;
   maxWidth = 900;
   bounceClass = '';
   resizeThrottle = false;
@@ -90,7 +99,9 @@ export class PlayerComponent {
   constructor(
     private playerService: PlayerService,
     private stemsMixerService: StemsMixerService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private trackLikesService: TrackLikesService,
+    private authService: AuthService
   ) {}
 
   // Inicializācija, Angular dzīves cikls / subscriptions
@@ -103,6 +114,8 @@ export class PlayerComponent {
         this.currentTrack = track;
         this.stems = track.stems || [];
         this.needsSync = true;
+
+        this.loadLikeStatus(track.id);
       }
     });
 
@@ -141,6 +154,8 @@ export class PlayerComponent {
       this.onEnded();
     });
     this.setupTimeTracking();
+    this.updateSliderValue();
+
   }
 
   ngAfterViewChecked() {
@@ -148,6 +163,35 @@ export class PlayerComponent {
       this.needsSync = false;
       this.syncPlaybackState();
     }
+  }
+
+  ngOnChanges() { // slider balta krasa
+    this.updateSliderValue();
+  }
+
+  setLikeStatus(status: 'like' | 'dislike') {
+    if (!this.currentTrack) return;
+
+    const newStatus = this.likeStatus === status ? null : status; // Отмена, если повторно нажали
+    this.trackLikesService.setTrackLike(this.currentTrack.id, newStatus).subscribe({
+      next: () => {
+        this.likeStatus = newStatus;
+      },
+      error: (err) => {
+        console.error('Neizdevās saglabāt like statusu:', err);
+      }
+    });
+  }
+
+  loadLikeStatus(trackId: number) {
+    this.trackLikesService.getUserTrackLike(trackId).subscribe({
+      next: (res) => {
+        this.likeStatus = res?.like_status || null;
+      },
+      error: (err) => {
+        console.error('Kļūda ielādējot like statusu:', err);
+      }
+    });
   }
 
 
@@ -606,5 +650,10 @@ export class PlayerComponent {
   // Emitē player platumu
   emitWidth() {
     this.widthChanged.emit(this.playerWidth);
+  }
+
+  updateSliderValue() {
+    const percentage = (this.currentTime / this.duration) * 100;
+    document.documentElement.style.setProperty('--value', `${percentage}`);
   }
 }
