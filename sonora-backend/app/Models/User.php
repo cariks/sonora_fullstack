@@ -74,4 +74,15 @@ class User extends Authenticatable
         return $this->belongsToMany(Genre::class, 'artist_genres', 'artist_id', 'genre_id')
             ->withTimestamps();
     }
+
+    //  QUEUE!
+    public function playbackQueue()
+    {
+        return $this->hasMany(\App\Models\UserPlaybackQueue::class)->orderBy('position');
+    }
+
+    public function playbackStatus()
+    {
+        return $this->hasOne(\App\Models\PlaybackStatus::class);
+    }
 }

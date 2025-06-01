@@ -4,7 +4,7 @@
     class="w-full h-[296px] rounded-[14px] overflow-hidden relative"
     [ngClass]="{ 'bg-neutral-700': !profileUser?.photo }"
   >
-    <!-- Фон-фото с насыщенностью и размытием -->
+    <!-- fona attels -->
     <img
       *ngIf="profileUser?.photo"
       [src]="profileUser.photo"
@@ -12,10 +12,10 @@
       alt="Profila attēls"
     />
 
-    <!-- Градиентный оверлей -->
+    <!-- gradients -->
     <div class="absolute inset-0 bg-gradient-to-r from-dark-2/60 to-dark-2/0 pointer-events-none"></div>
 
-    <!-- Текст поверх -->
+    <!-- teksts -->
     <div class="absolute top-6 left-6 text-white z-10">
       <div class="flex flex-col content-between">
 

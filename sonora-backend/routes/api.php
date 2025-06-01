@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\PlaybackController;
 use App\Http\Controllers\TempPhotoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,7 @@ use App\Http\Controllers\ArtistGenreController;
 use App\Models\Photo;
 use App\Http\Controllers\TrackLikeController;
 use App\Http\Controllers\PlaylistController;
+use App\Http\Controllers\PlaylistTrackController;
 
 
 /*
@@ -58,10 +60,30 @@ Route::middleware('auth:sanctum')->group(function () { // Like dislike
 });
 Route::get('/tracks/{trackId}/like-status', [TrackLikeController::class, 'getStatus']);
 
+
 // Playlisti
 Route::middleware('auth:sanctum')->post('/playlists/init-default', [PlaylistController::class, 'createDefaultPlaylists']);
 Route::middleware('auth:sanctum')->get('/playlists', [PlaylistController::class, 'index']);
-Route::middleware('auth:sanctum')->get('/playlists/liked', [PlaylistController::class, 'likedTracks']);
+
+//Route::middleware('auth:sanctum')->post('/playlist-track', [PlaylistTrackController::class, 'addTrackToPlaylist']);
+Route::middleware('auth:sanctum')->get('/playlists/{identifier}/tracks', [PlaylistController::class, 'getPlaylistTracks']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/playlist-tracks/add', [PlaylistTrackController::class, 'addToPlaylist']);
+    Route::post('/playlist-tracks/remove', [PlaylistTrackController::class, 'removeFromPlaylist']);
+});
+
+Route::get('/playlists/{identifier}/tracks', [PlaylistController::class, 'getTracksByPlaylist']);
+
+// Queue - rinda
+Route::get('/playback/queue', [PlaybackController::class, 'getQueue']);
+Route::post('/playback/queue', [PlaybackController::class, 'updateQueue']);
+Route::delete('/playback/queue', [PlaybackController::class, 'clearQueue']);
+
+Route::get('/playback/status', [PlaybackController::class, 'getStatus']);
+Route::post('/playback/status', [PlaybackController::class, 'updateStatus']);
+Route::middleware('auth:sanctum')->get('/playlists/{identifier}', [PlaylistController::class, 'getTracksByPlaylist']);
+
 
 
 // Žanri, artisti utt

@@ -28,9 +28,10 @@ class Playlist extends Model
 
     public function tracks()
     {
-        return $this->belongsToMany(Track::class, 'playlist_tracks')
+        return $this->belongsToMany(Track::class, 'playlist_tracks', 'playlist_id', 'track_id')
+            ->withTimestamps()
             ->withPivot('position')
-            ->withTimestamps();
+            ->orderBy('playlist_tracks.position');
     }
 
     public function genre()

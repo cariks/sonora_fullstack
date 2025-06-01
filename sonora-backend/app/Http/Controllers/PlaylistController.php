@@ -6,6 +6,9 @@ use App\Models\Playlist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Track;
+use App\Models\PlaylistTrack;
+use Illuminate\Support\Str;
+
 
 class PlaylistController extends Controller
 {
@@ -28,7 +31,7 @@ class PlaylistController extends Controller
                     'user_id' => $user->id,
                     'name' => $name,
                     'description' => '',
-                    'cover_image' => null, // Картинка будет подтягиваться по типу
+                    'cover_image' => null,
                     'is_public' => false,
                     'type' => $type,
                     'genre_id' => null,
@@ -63,7 +66,11 @@ class PlaylistController extends Controller
                     'cover_image' => $cover,
                     'is_public' => $playlist->is_public,
                     'type' => $playlist->type,
+                    'genre_id' => $playlist->genre_id,
                     'genre' => $playlist->genre?->name,
+                    'identifier' => $playlist->type === 'genre' && $playlist->genre
+                        ? 'genre-' . \Str::slug($playlist->genre->name) . '-' . $playlist->playlist_id
+                        : $playlist->type,
                 ];
             });
 
@@ -109,6 +116,78 @@ class PlaylistController extends Controller
             'playlist_name' => 'Tavs Like saraksts',
             'tracks' => $formattedTracks
         ]);
+    }
+
+
+    public function getTracksByPlaylist($identifier)
+    {
+        $user = Auth::user();
+
+        $playlist = Playlist::where('user_id', $user->id)
+            ->where(function ($q) use ($identifier) {
+                if (Str::startsWith($identifier, 'genre-')) {
+                    $id = (int) substr($identifier, strrpos($identifier, '-') + 1);
+                    $q->where('playlist_id', $id);
+                } else {
+                    $q->where('playlist_id', $identifier)
+                        ->orWhere('type', $identifier);
+                }
+            })
+            ->first();
+
+        if (!$playlist) {
+            return response()->json(['message' => 'Playlist not found'], 404);
+        }
+
+        // sanemam dziesmas pec pozicijas
+        $tracks = $playlist->tracks()->with(['activeVersion.stems', 'user', 'artist', 'activeVersion'])
+            ->orderBy('playlist_tracks.position')
+            ->get();
+
+        $formattedTracks = $tracks->map(function ($track) {
+            $version = $track->activeVersion;
+
+            return [
+                'id' => $track->id,
+                'title' => $track->title,
+                'cover_image' => $track->cover_image ? asset('storage/' . $track->cover_image) : null,
+                'audio_file' => $version?->audio_file
+                    ? url('api/stream/track/' . basename($version->audio_file))
+                    : null,
+                'stems' => $version?->stems?->map(function ($stem) use ($version) {
+                        return [
+                            'type' => $stem->stem_type,
+                            'url' => url('api/stream/stems/track_' . $version->id . '/' . basename($stem->audio_file)),
+                        ];
+                    })->values() ?? [],
+                'artist_name' => $track->artist?->username ?? $track->user?->username ?? 'Nezināms',
+                'key' => $version?->key,
+                'bpm' => $version?->bpm,
+                'lyrics' => $version?->lyrics_visible ? $version->lyrics : null,
+            ];
+        });
+
+        return response()->json([
+            'playlist_name' => $playlist->name,
+            'tracks' => $formattedTracks
+        ]);
+    }
+
+
+    // lai izveidot sarakstu (queue)
+    public function getByIdentifier($identifier)
+    {
+        $user = auth()->user();
+
+        $playlist = \App\Models\Playlist::where('user_id', $user->id)
+            ->where('identifier', $identifier)
+            ->first();
+
+        if (!$playlist) {
+            return response()->json(['message' => 'Playlist not found'], 404);
+        }
+
+        return response()->json($playlist);
     }
 
 }

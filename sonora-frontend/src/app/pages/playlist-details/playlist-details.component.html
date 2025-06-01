@@ -1,22 +1,105 @@
 <div class="p-8 text-white">
+  <div
+    class="w-full h-[300px] rounded-lg mb-6 flex items-center px-8 py-2 gap-6"
+    [ngStyle]="{
+    'background-image':
+      playlistType === 'liked'
+        ? 'linear-gradient(to bottom right, #129210, #1DFA2F, #ffffff)'
+        : playlistType === 'popular'
+        ? 'linear-gradient(to bottom right, #2548BE, #46A6FF, #ffffff)'
+        : playlistType === 'fresh'
+        ? 'linear-gradient(to bottom right, #E88F00, #F6B740, #ffffff)'
+        : playlistType?.startsWith('genre-')
+        ? 'linear-gradient(to bottom right, #6b7280, #a3a3a3, #ffffff)'
+        : 'linear-gradient(to bottom right, #6b7280, #9ca3af, #ffffff)'
+     }"
+  >
+   <div class="flex flex-row justify-between h-full w-full">
+     <div class="h-full flex flex-col">
+       <h1
+         class="text-[48px] sm:text-[64px] md:text-[72px] lg:text-[84px] font-bold tracking-tighter leading-tight pt-4"
+       >
+         {{ playlistName }}
+       </h1>
+
+       <div class="flex items-center gap-4 mt-24">
+         <button
+           (click)="playEntirePlaylistSorted()"
+           class="py-2 pl-4 pr-6 font-medium rounded-full bg-white text-dark-3 hover:bg-gray-1 transition-all transition-300 flex gap-2 items-center">
+           <svg width="16px" height="16px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#171717" stroke-width="1.5"><path d="M6.90588 4.53682C6.50592 4.2998 6 4.58808 6 5.05299V18.947C6 19.4119 6.50592 19.7002 6.90588 19.4632L18.629 12.5162C19.0211 12.2838 19.0211 11.7162 18.629 11.4838L6.90588 4.53682Z" fill="#171717" stroke="#171717" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+           Atskaņot
+         </button>
+
+         <button
+           (click)="toggleSortDirection()"
+           class="py-2 pl-4 pr-6 font-medium rounded-full bg-white text-dark-3 hover:bg-gray-1 transition-all transition-300 flex gap-2 items-center"
+         >
+           Kārtot sarakstu: {{ sortDirection === 'asc' ? 'augoši' : 'dilstoši' }}
+         </button>
+      </div>
+     </div>
+
+     <div class="h-full content-center">
+         <!-- SVG ikona  -->
+         <div class="w-[112px] h-[112px] mr-14">
+           <svg *ngIf="iconType === 'liked'" width="112" height="112" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+             <path fill-rule="evenodd" clip-rule="evenodd"
+                   d="M11.9999 3.94228C13.1757 2.85872 14.7069 2.25 16.3053 2.25C18.0313 2.25 19.679 2.95977 20.8854 4.21074C22.0832 5.45181 22.75 7.1248 22.75 8.86222C22.75 10.5997 22.0831 12.2728 20.8854 13.5137C20.089 14.3393 19.2938 15.1836 18.4945 16.0323C16.871 17.7562 15.2301 19.4985 13.5256 21.14L13.5216 21.1438C12.6426 21.9779 11.2505 21.9476 10.409 21.0754L3.11399 13.5136C0.62867 10.9374 0.62867 6.78707 3.11399 4.21085C5.54605 1.68984 9.46239 1.60032 11.9999 3.94228Z"
+                   fill="#ffffff"></path>
+           </svg>
+
+           <svg *ngIf="iconType === 'popular'" width="112" height="112" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+             <path d="M8.58737 8.23597L11.1849 3.00376C11.5183 2.33208 12.4817 2.33208 12.8151 3.00376L15.4126 8.23597L21.2215 9.08017C21.9668 9.18848 22.2638 10.0994 21.7243 10.6219L17.5217 14.6918L18.5135 20.4414C18.6409 21.1798 17.8614 21.7428 17.1945 21.3941L12 18.678L6.80547 21.3941C6.1386 21.7428 5.35909 21.1798 5.48645 20.4414L6.47825 14.6918L2.27575 10.6219C1.73617 10.0994 2.03322 9.18848 2.77852 9.08017L8.58737 8.23597Z"
+                   fill="#ffffff" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round"></path>
+           </svg>
+
+           <svg *ngIf="iconType === 'fresh'" width="112" height="112" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+             <path fill-rule="evenodd" clip-rule="evenodd"
+                   d="M1.84647 7.15123C1.54566 7.21608 1.31498 7.45811 1.26464 7.7617C1.2143 8.06528 1.35452 8.36881 1.6183 8.52729L8.13474 12.4421L14.3544 8.08705C14.6938 7.84947 15.1614 7.93193 15.399 8.27123C15.6366 8.61054 15.5541 9.0782 15.2148 9.31578L8.99537 13.6707L10.4455 21.1339C10.5042 21.436 10.7415 21.6715 11.044 21.7281C11.3465 21.7846 11.6528 21.6506 11.8166 21.3901L22.7919 3.93893C22.9526 3.68349 22.9445 3.35665 22.7714 3.10947C22.5983 2.86228 22.294 2.7429 21.999 2.80649L1.84647 7.15123Z"
+                   fill="#ffffff"></path>
+           </svg>
+
+           <svg *ngIf="iconType.startsWith('genre')" width="112" height="112" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+             <path d="M10 21H9C7.89543 21 7 20.1046 7 19V18C7 16.8954 7.89543 16 9 16H12V8V4L17 3V7L12 8V16V19C12 20.1046 11.1046 21 10 21Z"
+                   fill="#ffffff"></path>
+             <path d="M12 16V19C12 20.1046 11.1046 21 10 21H9C7.89543 21 7 20.1046 7 19V18C7 16.8954 7.89543 16 9 16H12ZM12 16V8M12 8V4L17 3V7L12 8Z"
+                   stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round"></path>
+           </svg>
+         </div>
+     </div>
+   </div>
+
+
+
+  </div>
+
+
   <h1 class="text-3xl font-bold mb-4">{{ playlistName }}</h1>
 
-  <div *ngIf="tracks.length > 0; else empty">
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      <div
-        *ngFor="let track of tracks"
-        class="bg-neutral-800 rounded-lg p-4 hover:bg-neutral-700 transition cursor-pointer"
-      >
-        <img [src]="track.cover_image || 'assets/default-cover.jpg'" class="w-full h-48 object-cover rounded" />
-        <div class="mt-2">
-          <p class="text-white font-semibold truncate">{{ track.title }}</p>
-          <p class="text-sm text-neutral-400 truncate">{{ track.artist_name }}</p>
-        </div>
+
+
+  <div *ngFor="let track of sortedTracks; let i = index"
+       class="flex items-center gap-4 p-2 rounded-lg hover:bg-dark-1 transition cursor-pointer flex justify-between"
+       (click)="playFromIndex(i)">
+    <div class="flex gap-4 items-center">
+      <span class="text-neutral-400 w-6 text-center pl-1">{{ i + 1 }}</span>
+      <img [src]="track.cover_image || 'assets/default-cover.jpg'" class="w-16 h-16 object-cover rounded-[2px]" />
+      <div class="flex flex-col">
+        <p class="text-white font-semibold truncate text-[21px] leading-tight">{{ track.title }}</p>
+        <p class="text-gray-2 truncate text-[14px] leading-tight">{{ track.artist_name }}</p>
       </div>
+    </div>
+
+    <div class="p-4">
+      <button (click)="removeFromPlaylist(track.id)"
+              class="hover:text-red-300 font-medium text-[16px]"
+      >Dzēst
+      </button>
     </div>
   </div>
 
-  <p>playlist-details.component.html</p>
+
+
 
   <ng-template #empty>
     <p class="text-neutral-400">Šajā sarakstā vēl nav nevienas dziesmas.</p>

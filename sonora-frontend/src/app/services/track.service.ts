@@ -26,4 +26,19 @@ export class TrackService {
   getGenrePlaylist(genreId: number) {
     return this.http.get<any>(`/api/playlists/genre/${genreId}`, { withCredentials: true });
   }
+
+  getTracksByPlaylist(identifier: string) {
+    return this.http.get<any>(`/api/playlists/${identifier}/tracks`, {
+      withCredentials: true,
+    });
+  }
+
+  removeTrackFromPlaylist(playlistId: string, trackId: number) {
+    return this.http.delete(`/api/playlists/${playlistId}/tracks/${trackId}`, { withCredentials: true });
+  }
+
+  addTrackToPlaylist(playlistId: string, trackId: number) {
+    return this.http.post(`/api/playlists/${playlistId}/tracks`, { track_id: trackId }, { withCredentials: true });
+  }
+
 }

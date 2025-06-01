@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\TrackLike;
+use App\Models\Playlist;
+use App\Models\PlaylistTrack;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,10 +24,41 @@ class TrackLikeController extends Controller
     {
         $user = Auth::user();
 
+        // atjaunojam vai pievienojam like
         $like = TrackLike::updateOrCreate(
             ['user_id' => $user->id, 'track_id' => $trackId],
             ['like_status' => $status]
         );
+
+        // sanemam like plajlist
+        $playlist = Playlist::where('user_id', $user->id)
+            ->where('type', 'liked')
+            ->first();
+
+        if ($playlist) {
+            if ($status === 'like') {
+                // pievienojam dziesmu playlist_tracks, ja vina tur nav
+                $exists = PlaylistTrack::where('playlist_id', $playlist->playlist_id)
+                    ->where('track_id', $trackId)
+                    ->exists();
+
+                if (!$exists) {
+                    $lastPosition = PlaylistTrack::where('playlist_id', $playlist->playlist_id)
+                        ->max('position') ?? 0;
+
+                    PlaylistTrack::create([
+                        'playlist_id' => $playlist->playlist_id,
+                        'track_id' => $trackId,
+                        'position' => $lastPosition + 1,
+                    ]);
+                }
+            } else {
+                // dzesam nost no playlist_tracks ja ir dislike
+                PlaylistTrack::where('playlist_id', $playlist->playlist_id)
+                    ->where('track_id', $trackId)
+                    ->delete();
+            }
+        }
 
         return response()->json(['message' => "Track $status recorded", 'like' => $like]);
     }
@@ -34,9 +67,21 @@ class TrackLikeController extends Controller
     {
         $user = Auth::user();
 
+        // nonemam like/dislike
         TrackLike::where('user_id', $user->id)
             ->where('track_id', $trackId)
             ->delete();
+
+        // dzesam no playlist_tracks
+        $playlist = Playlist::where('user_id', $user->id)
+            ->where('type', 'liked')
+            ->first();
+
+        if ($playlist) {
+            PlaylistTrack::where('playlist_id', $playlist->playlist_id)
+                ->where('track_id', $trackId)
+                ->delete();
+        }
 
         return response()->json(['message' => 'Like/dislike removed']);
     }

@@ -35,6 +35,8 @@ export class PlayerComponent {
   volume = 1;
   isToggleBlocked = false;
   likeStatus: 'like' | 'dislike' | null = null;
+  private likedUpdateSub!: Subscription;
+
 
   showEffects = false;
 
@@ -58,6 +60,23 @@ export class PlayerComponent {
   dislikeTrack() {
     this.setLikeStatus('dislike');
   }
+
+  // Spēlē iepriekšējo dziesmu no rindas
+  playPrevious(): void {
+    const prev = this.playerService.getPreviousTrack();
+    if (prev) {
+      this.playerService.setTrack(prev, true);
+    }
+  }
+
+// Spēlē nākamo dziesmu no rindas
+  playNext(): void {
+    const next = this.playerService.getNextTrack();
+    if (next) {
+      this.playerService.setTrack(next, true);
+    }
+  }
+
 
   private activeFadeTimers: Map<HTMLAudioElement, any> = new Map();
 
@@ -98,7 +117,7 @@ export class PlayerComponent {
   readonly defaultWidth = 642;
   isResizing = false;
   minWidth = 420;
-  maxWidth = 900;
+  maxWidth = 850;
   bounceClass = '';
   resizeThrottle = false;
 
@@ -148,6 +167,13 @@ export class PlayerComponent {
     this.timeSub = this.playerService.currentTime$.subscribe(time => {
       this.currentTime = time;
     });
+
+    this.likedUpdateSub = this.trackLikesService.getLikedPlaylistUpdateObservable().subscribe(() => {
+      // like atjaunosana ja ir dzests no like saraksta
+      if (this.currentTrack) {
+        this.loadLikeStatus(this.currentTrack.id);
+      }
+    });
   }
 
   // Kad audio elementi ir pieejami DOM
@@ -175,10 +201,17 @@ export class PlayerComponent {
     this.updateSliderValue();
   }
 
+  ngOnDestroy() {
+    this.trackSub?.unsubscribe();
+    this.playbackSub?.unsubscribe();
+    this.timeSub?.unsubscribe();
+    this.likedUpdateSub?.unsubscribe();
+  }
+
   setLikeStatus(status: 'like' | 'dislike') {
     if (!this.currentTrack) return;
 
-    const newStatus = this.likeStatus === status ? null : status; // Отмена, если повторно нажали
+    const newStatus = this.likeStatus === status ? null : status; // nemam nost uz otro kliku
     this.trackLikesService.setTrackLike(this.currentTrack.id, newStatus).subscribe({
       next: () => {
         this.likeStatus = newStatus;

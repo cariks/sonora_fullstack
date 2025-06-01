@@ -14,11 +14,6 @@ export class PlaylistService {
     return this.http.get<any[]>('/api/playlists', { withCredentials: true });
   }
 
-  getLikedPlaylist() {
-    return this.http.get<any>('/api/playlists/liked', { withCredentials: true });
-  }
-
-
   loadPlaylists() {
     this.http.get<any[]>('/api/playlists', { withCredentials: true }).subscribe({
       next: (playlists) => this.playlistsSubject.next(playlists),
