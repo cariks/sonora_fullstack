@@ -20,7 +20,7 @@ class UserController extends Controller
             'bio' => $user->bio,
             'subscribers_count' => 0,
             'photo' => $user->primaryPhoto?->photo_url
-                ? asset('storage/' . $user->primaryPhoto->photo_url)
+                ? asset($user->primaryPhoto->photo_url)
                 : null,
         ]);
     }

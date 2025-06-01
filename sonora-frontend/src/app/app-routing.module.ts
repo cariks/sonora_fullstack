@@ -11,6 +11,7 @@ import { SettingsComponent } from './pages/settings/settings.component';
 import { AuthGuard } from './guards/auth.guard';
 import { UserProfileComponent } from './pages/user-profile/user-profile.component';
 import {AuthPageComponent} from "./pages/auth-page/auth-page.component";
+import { PlaylistDetailsComponent } from './pages/playlist-details/playlist-details.component';
 
 const routes: Routes = [
   {
@@ -24,11 +25,14 @@ const routes: Routes = [
       { "path": 'upload', "component": UploadComponent },
       { "path": 'my-songs', "component": MySongsComponent },
       { "path": 'settings', "component": SettingsComponent },
-      { "path": 'user/:username', "component": UserProfileComponent }
+      { "path": 'user/:username', "component": UserProfileComponent },
+      { "path": 'playlist/:slug', "component": PlaylistDetailsComponent },
+
     ]
   },
   { path: 'auth-page', component: AuthPageComponent },
-  { path: '**', redirectTo: '' }
+  { path: '**', redirectTo: '' },
+
 ];
 
 

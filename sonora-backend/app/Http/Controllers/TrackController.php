@@ -11,7 +11,7 @@ class TrackController extends Controller
     public function index()
     {
         // Ielādē gan aktīvo versiju, gan tās stems
-        $tracks = Track::with(['activeVersion.stems', 'activeVersion', 'user'])->get();
+        $tracks = Track::with(['activeVersion.stems', 'activeVersion', 'user', 'artist'])->get();
 
 
         return response()->json($tracks->map(function ($track) {
@@ -31,7 +31,7 @@ class TrackController extends Controller
                         ];
                     })->values() ?? [],
                 // informacija
-                'artist_name' => $track->user?->name ?? 'Nezināms',
+                'artist_name' => $track->artist?->username ?? $track->user?->username ?? 'Nezināms',
                 'key' => $version?->key,
                 'bpm' => $version?->bpm,
                 'lyrics' => $version?->lyrics_visible ? $version->lyrics : null,

@@ -65,10 +65,10 @@
       <input type="password" id="confirmPassword" formControlName="confirmPassword"
              class="input"
              placeholder="••••••••" />
+      <p class="text-[12px] text-gray-2 font-medium">Vismaz 8 rakstzīmes</p>
       <p class="text-red-500 text-sm" *ngIf="registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched">
         Paroles nesakrīt
       </p>
-      <p class="text-[12px] text-gray-2 font-medium">Vismaz 8 rakstzīmes</p>
 
     </div>
 
@@ -146,7 +146,7 @@
 
         <!-- popop -->
         <div class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-[240px] bg-gray-4/80 text-sm text-white font-medium text-center px-4 py-3 rounded-lg opacity-0 group-hover:opacity-100 transition pointer-events-none z-0">
-          Vari turpināt arī bez attēla — to varēsi pievienot vēlāk
+          Vari turpināt arī bez attēla - to varēsi pievienot vēlāk
         </div>
       </div>
 

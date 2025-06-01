@@ -11,7 +11,7 @@ use App\Http\Controllers\UserStemsMixerController;
 use App\Http\Controllers\ArtistGenreController;
 use App\Models\Photo;
 use App\Http\Controllers\TrackLikeController;
-
+use App\Http\Controllers\PlaylistController;
 
 
 /*
@@ -32,13 +32,12 @@ Route::post('/logout', [AuthController::class, 'logout']);
 Route::post('/upload-temp-photo', [TempPhotoController::class, 'upload']);
 Route::post('/register', [RegisterController::class, 'register']);
 
-
-
 Route::get('/check-email', [RegisterController::class, 'checkEmail']);
 Route::get('/check-username', [RegisterController::class, 'checkUsername']);
 
 Route::get('/genres', [\App\Http\Controllers\GenreController::class, 'index']);
 Route::post('/suggested-artists', [ArtistGenreController::class, 'getSuggestedArtists']);
+
 
 // Lietotāja dati (ar tokenu)
 Route::middleware('auth:sanctum')->get('/user', [AuthController::class, 'me']);
@@ -58,6 +57,11 @@ Route::middleware('auth:sanctum')->group(function () { // Like dislike
     Route::delete('/tracks/{trackId}/like', [TrackLikeController::class, 'remove']);
 });
 Route::get('/tracks/{trackId}/like-status', [TrackLikeController::class, 'getStatus']);
+
+// Playlisti
+Route::middleware('auth:sanctum')->post('/playlists/init-default', [PlaylistController::class, 'createDefaultPlaylists']);
+Route::middleware('auth:sanctum')->get('/playlists', [PlaylistController::class, 'index']);
+Route::middleware('auth:sanctum')->get('/playlists/liked', [PlaylistController::class, 'likedTracks']);
 
 
 // Žanri, artisti utt

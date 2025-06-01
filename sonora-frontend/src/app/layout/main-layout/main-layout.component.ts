@@ -1,4 +1,5 @@
 import { Component, HostListener, OnInit } from '@angular/core';
+import {PlaylistService} from "../../services/playlist.service";
 
 @Component({
   selector: 'app-main-layout',
@@ -10,6 +11,9 @@ export class MainLayoutComponent implements OnInit {
   playerWidth = 384;
   sidebarWidth = 315;
 
+  constructor(private playlistService: PlaylistService) {}
+
+
   ngOnInit() {
     const playerStored = localStorage.getItem('playerWidth');
     this.playerWidth = playerStored ? +playerStored : 384;
@@ -19,6 +23,10 @@ export class MainLayoutComponent implements OnInit {
 
     // Ja sidebar ir slēpts, iestatajam mazāku platumu
     this.sidebarWidth = this.isSidebarCollapsed ? 96 : 315;
+
+    // Load playlists
+    this.playlistService.loadPlaylists();
+
   }
 
   toggleSidebar() {

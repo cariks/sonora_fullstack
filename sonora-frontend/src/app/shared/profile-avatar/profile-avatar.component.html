@@ -1,8 +1,8 @@
-<ng-container *ngIf="photoUrl; else showInitials">
+<ng-container *ngIf="photoUrl; else showInitials" class="select-none">
   <img
     [src]="photoUrl"
     [alt]="displayName"
-    class="rounded-full object-cover"
+    class="rounded-full object-cover select-none"
     [ngStyle]="{ width: size + 'px', height: size + 'px' }"
   />
 </ng-container>

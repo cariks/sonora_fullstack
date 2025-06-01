@@ -17,10 +17,72 @@
       <!-- Current track info -->
       <div class="flex flex-col gap-3 pt-3">
         <img
+          *ngIf="!showEffects"
           [src]="currentTrack?.cover_image || 'assets/blank_cover.png'"
           class="w-full max-w-[587px] aspect-square object-cover rounded rounded-[8px] shadow mx-auto"
           alt="Cover"
         />
+
+<!--        EFEKTI-->
+        <div *ngIf="showEffects" class="w-full max-w-[587px] aspect-square object-cover rounded rounded-[8px] shadow mx-auto bg-dark-1 p-6">
+
+          <!-- Stems režīms -->
+          <div class="flex items-center gap-3 mt-10">
+            <label class="text-sm font-semibold">Stems režīms</label>
+            <!-- Custom Stems Toggle -->
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                class="sr-only peer"
+                [checked]="isStemsMode"
+                [disabled]="isToggleBlocked"
+                (change)="onStemsToggle($event)"
+              />
+              <div
+                class="w-11 h-6 bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500
+    rounded-full peer peer-checked:bg-green-500 transition duration-300"
+              ></div>
+              <div
+                class="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full
+    transition-all duration-300 peer-checked:translate-x-full"
+              ></div>
+            </label>
+
+
+            <button
+              (click)="resetStemVolumes()"
+              class="px-3 py-1 text-sm rounded bg-neutral-700 hover:bg-neutral-600 transition"
+            >
+              Reset
+            </button>
+          </div>
+
+          <!-- Stem skaļuma kontrole -->
+          <div>
+            <p class="text-sm font-semibold mb-2">Stems skaļuma kontrole:</p>
+
+            <div *ngIf="stems.length > 0; else noStems" class="flex flex-col gap-3">
+              <div *ngFor="let stem of stems" class="flex items-center gap-4">
+                <span class="capitalize w-20">{{ stem.type }}</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  [value]="stemVolumes[stem.type]"
+                  (input)="onStemVolumeInput(stem.type, $event)"
+                  class="w-full appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <ng-template #noStems>
+              <p class="text-neutral-500 text-sm">Šim ierakstam nav pieejamas stem celiņi.</p>
+            </ng-template>
+          </div>
+
+        </div>
+
 
 
         <!-- Info-->
@@ -30,9 +92,14 @@
             <p class="text-[27px] font-semibold truncate max-w-[90%] leading-[32px]">
               {{ currentTrack?.title || 'Nav izvēlēta dziesma' }}
             </p>
-            <p class="text-[16px] font-medium text-gray-1 truncate max-w-[90%]" *ngIf="currentTrack?.artist_name">
+            <a
+              *ngIf="currentTrack?.artist_name"
+              [routerLink]="'/user/' + currentTrack.artist_name"
+              class="text-[16px] font-medium text-gray-1 truncate max-w-[90%] hover:underline"
+            >
               {{ currentTrack.artist_name }}
-            </p>
+            </a>
+
           </div>
 
 
@@ -107,23 +174,104 @@
 
         <!-- Effects Poga (1/3) -->
         <div class="w-1/3 flex justify-start gap-6">
+          <!-- Контейнер -->
           <button
-            class="w-[48px] h-[48px] bg-dark-1 rounded-[8px] flex items-center justify-center text-white hover:bg-neutral-700 transition"
+            (click)="toggleEffects()"
+            class="w-[48px] h-[48px] rounded-[8px] flex items-center justify-center transition bg-dark-1 hover:bg-neutral-700 relative overflow-hidden"
           >
-            <svg width="28px" height="28px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF" stroke-width="1.5"><path d="M8 15C12.8747 15 15 12.949 15 8C15 12.949 17.1104 15 22 15C17.1104 15 15 17.1104 15 22C15 17.1104 12.8747 15 8 15Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.5" stroke-linejoin="round"></path><path d="M2 6.5C5.13376 6.5 6.5 5.18153 6.5 2C6.5 5.18153 7.85669 6.5 11 6.5C7.85669 6.5 6.5 7.85669 6.5 11C6.5 7.85669 5.13376 6.5 2 6.5Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.5" stroke-linejoin="round"></path></svg>
+            <!-- Градиентная иконка (анимированная) -->
+            <svg
+              [ngClass]="{
+      'opacity-100': isStemsMode,
+      'opacity-0': !isStemsMode
+    }"
+              class="absolute w-[24px] h-[24px] transition-opacity duration-500"
+              viewBox="0 0 27 27"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <!-- Градиент с анимацией -->
+                <linearGradient id="animatedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%">
+                    <animate attributeName="stop-color"
+                             values="#00FF26;#B8FF61;#FFFFFF;#00FF26"
+                             dur="2s"
+                             repeatCount="indefinite" />
+                  </stop>
+                  <stop offset="100%">
+                    <animate attributeName="stop-color"
+                             values="#FFFFFF;#B8FF61;#00FF26;#FFFFFF"
+                             dur="2s"
+                             repeatCount="indefinite" />
+                  </stop>
+                </linearGradient>
+
+
+
+
+                <!-- Маска с формой иконки -->
+                <mask id="stemsIconMask">
+                  <rect width="27" height="27" fill="black" />
+                  <path
+                    d="M16.5 26C16.5 23.1506 15.8776 21.3438 14.7637 20.2314C13.6492 19.1188 11.8415 18.5 9 18.5C8.44771 18.5 8 18.0523 8 17.5C8 16.9477 8.44771 16.5 9 16.5C11.8481 16.5 13.6536 15.8968 14.7656 14.7939C15.876 13.6927 16.5 11.8891 16.5 9C16.5 8.44771 16.9477 8 17.5 8C18.0523 8 18.5 8.44771 18.5 9C18.5 11.8908 19.1206 13.6933 20.2285 14.7939C21.3378 15.8959 23.142 16.5 26 16.5C26.5523 16.5 27 16.9477 27 17.5C27 18.0523 26.5523 18.5 26 18.5C23.1486 18.5 21.3422 19.1188 20.2305 20.2305C19.1188 21.3422 18.5 23.1486 18.5 26C18.5 26.5523 18.0523 27 17.5 27C16.9477 27 16.5 26.5523 16.5 26Z"
+                    fill="white"
+                  />
+                  <path
+                    d="M4.47949 8.5166C5.10476 9.14085 5.5 10.198 5.5 12C5.5 12.5523 5.94772 13 6.5 13C7.05228 13 7.5 12.5523 7.5 12C7.5 10.1964 7.89297 9.14024 8.5166 8.5166C9.14024 7.89297 10.1964 7.5 12 7.5C12.5523 7.5 13 7.05228 13 6.5C13 5.94772 12.5523 5.5 12 5.5C10.1897 5.5 9.13485 5.11615 8.51367 4.49902C7.89388 3.88321 7.5 2.83022 7.5 1C7.5 0.447715 7.05228 0 6.5 0C5.94772 0 5.5 0.447715 5.5 1C5.5 2.82841 5.10375 3.8816 4.48242 4.49805C3.85929 5.11611 2.80362 5.5 1 5.5C0.447715 5.5 0 5.94772 0 6.5C0 7.05228 0.447715 7.5 1 7.5C2.79662 7.5 3.85385 7.89222 4.47949 8.5166Z"
+                    fill="white"
+                  />
+                </mask>
+              </defs>
+
+              <!-- Градиентная заливка с блюром -->
+              <rect
+                x="-6"
+                y="-6"
+                width="40"
+                height="40"
+                fill="url(#animatedGradient)"
+                mask="url(#stemsIconMask)"
+                filter="blur(4px)"
+              />
+            </svg>
+
+            <!-- Обычный режим — статичная иконка -->
+            <svg
+              [ngClass]="{
+      'opacity-0': isStemsMode,
+      'opacity-100': !isStemsMode
+    }"
+              class="w-[24px] h-[24px] transition-opacity duration-300"
+              viewBox="0 0 27 27"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M16.5 26C16.5 23.1506 15.8776 21.3438 14.7637 20.2314C13.6492 19.1188 11.8415 18.5 9 18.5C8.44771 18.5 8 18.0523 8 17.5C8 16.9477 8.44771 16.5 9 16.5C11.8481 16.5 13.6536 15.8968 14.7656 14.7939C15.876 13.6927 16.5 11.8891 16.5 9C16.5 8.44771 16.9477 8 17.5 8C18.0523 8 18.5 8.44771 18.5 9C18.5 11.8908 19.1206 13.6933 20.2285 14.7939C21.3378 15.8959 23.142 16.5 26 16.5C26.5523 16.5 27 16.9477 27 17.5C27 18.0523 26.5523 18.5 26 18.5C23.1486 18.5 21.3422 19.1188 20.2305 20.2305C19.1188 21.3422 18.5 23.1486 18.5 26C18.5 26.5523 18.0523 27 17.5 27C16.9477 27 16.5 26.5523 16.5 26Z"
+                fill="white"
+              />
+              <path
+                d="M4.47949 8.5166C5.10476 9.14085 5.5 10.198 5.5 12C5.5 12.5523 5.94772 13 6.5 13C7.05228 13 7.5 12.5523 7.5 12C7.5 10.1964 7.89297 9.14024 8.5166 8.5166C9.14024 7.89297 10.1964 7.5 12 7.5C12.5523 7.5 13 7.05228 13 6.5C13 5.94772 12.5523 5.5 12 5.5C10.1897 5.5 9.13485 5.11615 8.51367 4.49902C7.89388 3.88321 7.5 2.83022 7.5 1C7.5 0.447715 7.05228 0 6.5 0C5.94772 0 5.5 0.447715 5.5 1C5.5 2.82841 5.10375 3.8816 4.48242 4.49805C3.85929 5.11611 2.80362 5.5 1 5.5C0.447715 5.5 0 5.94772 0 6.5C0 7.05228 0.447715 7.5 1 7.5C2.79662 7.5 3.85385 7.89222 4.47949 8.5166Z"
+                fill="white"
+              />
+            </svg>
           </button>
 
-          <button>
-            <svg width="34px" height="34px" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF"><path d="M22 6.99999C19 6.99999 13.5 6.99999 11.5 12.5C9.5 18 5 18 2 18" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 5C20 5 21.219 6.21895 22 7C21.219 7.78105 20 9 20 9" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M22 18C19 18 13.5 18 11.5 12.5C9.5 6.99999 5 7.00001 2 7" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 20C20 20 21.219 18.781 22 18C21.219 17.219 20 16 20 16" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-          </button>
-          <button>
-            <svg width="34px" height="34px" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF"><path d="M17 17H8C6.33333 17 3 16 3 12C3 8 6.33333 7 8 7H16C17.6667 7 21 8 21 12C21 13.4943 20.5348 14.57 19.865 15.3312" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M14.5 14.5L17 17L14.5 19.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-          </button>
+
+
+
+
+          <!--          <button>-->
+<!--            <svg width="34px" height="34px" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF"><path d="M22 6.99999C19 6.99999 13.5 6.99999 11.5 12.5C9.5 18 5 18 2 18" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 5C20 5 21.219 6.21895 22 7C21.219 7.78105 20 9 20 9" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M22 18C19 18 13.5 18 11.5 12.5C9.5 6.99999 5 7.00001 2 7" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 20C20 20 21.219 18.781 22 18C21.219 17.219 20 16 20 16" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>-->
+<!--          </button>-->
+<!--          <button>-->
+<!--            <svg width="34px" height="34px" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF"><path d="M17 17H8C6.33333 17 3 16 3 12C3 8 6.33333 7 8 7H16C17.6667 7 21 8 21 12C21 13.4943 20.5348 14.57 19.865 15.3312" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M14.5 14.5L17 17L14.5 19.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>-->
+<!--          </button>-->
         </div>
 
         <!-- Playback Controls (1/3) -->
         <div class="w-1/3 flex justify-center">
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-6">
             <!-- Backward -->
             <button class="w-[48px] h-[48px] flex items-center justify-center text-white hover:text-[#AAAAAA] transition">
               <svg width="44px" height="44px" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-width="1.5">
@@ -136,10 +284,10 @@
             <!-- Play/Pauza -->
             <button
               (click)="togglePlay()"
-              class="w-[64px] h-[64px] flex items-center justify-center text-[#171717] bg-white rounded-full hover:bg-[#E8E8E8] transition"
+              class="w-[54px] h-[54px] flex items-center justify-center text-[#171717] bg-white rounded-full hover:bg-[#E8E8E8] transition"
             >
               <i
-                class="fas text-3xl"
+                class="fas text-2xl"
                 [ngClass]="{
             'fa-play pl-[4px]': !isPlaying,
             'fa-pause': isPlaying
@@ -182,79 +330,64 @@
 
 
 
-      <!--      &lt;!&ndash; Volume Control &ndash;&gt;-->
-<!--      <div class="w-full flex items-center gap-3">-->
-<!--        <i class="fas fa-volume-down text-neutral-400 text-sm"></i>-->
-<!--        <input-->
-<!--          type="range"-->
-<!--          min="0"-->
-<!--          max="1"-->
-<!--          step="0.01"-->
-<!--          [value]="volume"-->
-<!--          (input)="onVolumeInput($event)"-->
-<!--          (mouseup)="onVolumeCommit($event)"-->
-<!--          (touchend)="onVolumeCommit($event)"-->
-<!--          class="flex-1 appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"-->
-<!--        />-->
-<!--        <i class="fas fa-volume-up text-neutral-400 text-sm"></i>-->
+
+
+<!--      &lt;!&ndash; Stems režīms &ndash;&gt;-->
+<!--      <div class="flex items-center gap-3 mt-10">-->
+<!--        <label class="text-sm font-semibold">Stems režīms</label>-->
+<!--        &lt;!&ndash; Custom Stems Toggle &ndash;&gt;-->
+<!--        <label class="relative inline-flex items-center cursor-pointer">-->
+<!--          <input-->
+<!--            type="checkbox"-->
+<!--            class="sr-only peer"-->
+<!--            [checked]="isStemsMode"-->
+<!--            [disabled]="isToggleBlocked"-->
+<!--            (change)="onStemsToggle($event)"-->
+<!--          />-->
+<!--          <div-->
+<!--            class="w-11 h-6 bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500-->
+<!--    rounded-full peer peer-checked:bg-green-500 transition duration-300"-->
+<!--          ></div>-->
+<!--          <div-->
+<!--            class="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full-->
+<!--    transition-all duration-300 peer-checked:translate-x-full"-->
+<!--          ></div>-->
+<!--        </label>-->
+
+
+<!--        <button-->
+<!--          (click)="resetStemVolumes()"-->
+<!--          class="px-3 py-1 text-sm rounded bg-neutral-700 hover:bg-neutral-600 transition"-->
+<!--        >-->
+<!--          Reset-->
+<!--        </button>-->
+<!--      </div>-->
+
+<!--      &lt;!&ndash; Stem skaļuma kontrole &ndash;&gt;-->
+<!--      <div>-->
+<!--        <p class="text-sm font-semibold mb-2">Stems skaļuma kontrole:</p>-->
+
+<!--        <div *ngIf="stems.length > 0; else noStems" class="flex flex-col gap-3">-->
+<!--          <div *ngFor="let stem of stems" class="flex items-center gap-4">-->
+<!--            <span class="capitalize w-20">{{ stem.type }}</span>-->
+<!--            <input-->
+<!--              type="range"-->
+<!--              min="0"-->
+<!--              max="1"-->
+<!--              step="0.01"-->
+<!--              [value]="stemVolumes[stem.type]"-->
+<!--              (input)="onStemVolumeInput(stem.type, $event)"-->
+<!--              class="w-full appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"-->
+<!--            />-->
+<!--          </div>-->
+<!--        </div>-->
+
+<!--        <ng-template #noStems>-->
+<!--          <p class="text-neutral-500 text-sm">Šim ierakstam nav pieejamas stem celiņi.</p>-->
+<!--        </ng-template>-->
 <!--      </div>-->
 
 
-
-      <!-- Stems režīms -->
-      <div class="flex items-center gap-3 mt-10">
-        <label class="text-sm font-semibold">Stems režīms</label>
-        <!-- Custom Stems Toggle -->
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            class="sr-only peer"
-            [checked]="isStemsMode"
-            [disabled]="isToggleBlocked"
-            (change)="onStemsToggle($event)"
-          />
-          <div
-            class="w-11 h-6 bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500
-    rounded-full peer peer-checked:bg-green-500 transition duration-300"
-          ></div>
-          <div
-            class="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full
-    transition-all duration-300 peer-checked:translate-x-full"
-          ></div>
-        </label>
-
-
-        <button
-          (click)="resetStemVolumes()"
-          class="px-3 py-1 text-sm rounded bg-neutral-700 hover:bg-neutral-600 transition"
-        >
-          Reset
-        </button>
-      </div>
-
-      <!-- Stem skaļuma kontrole -->
-      <div>
-        <p class="text-sm font-semibold mb-2">Stems skaļuma kontrole:</p>
-
-        <div *ngIf="stems.length > 0; else noStems" class="flex flex-col gap-3">
-          <div *ngFor="let stem of stems" class="flex items-center gap-4">
-            <span class="capitalize w-20">{{ stem.type }}</span>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              [value]="stemVolumes[stem.type]"
-              (input)="onStemVolumeInput(stem.type, $event)"
-              class="w-full appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"
-            />
-          </div>
-        </div>
-
-        <ng-template #noStems>
-          <p class="text-neutral-500 text-sm">Šim ierakstam nav pieejamas stem celiņi.</p>
-        </ng-template>
-      </div>
     </div>
 
     <!-- Audio elements -->

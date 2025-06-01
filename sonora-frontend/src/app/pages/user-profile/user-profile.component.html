@@ -1,33 +1,120 @@
-<div class="p-8 bg-neutral-900 min-h-screen text-white overflow-y-scroll scrollbar-hide">
+<div class="p-8 bg-dark-2 min-h-screen text-white overflow-y-scroll scrollbar-hide">
   <!-- Top section: avatar + main info -->
-  <div class="flex flex-col md:flex-row items-center md:items-end gap-8">
+  <div
+    class="w-full h-[296px] rounded-[14px] overflow-hidden relative"
+    [ngClass]="{ 'bg-neutral-700': !profileUser?.photo }"
+  >
+    <!-- Фон-фото с насыщенностью и размытием -->
     <img
-      [src]="profileUser?.photo || 'assets/default-avatar.png'"
-      alt="Profils"
-      class="w-48 h-48 rounded-full border-4 border-neutral-700 object-cover shadow-lg"
+      *ngIf="profileUser?.photo"
+      [src]="profileUser.photo"
+      class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 scale-[270%] blur-[70px] saturate-[150%] select-none max-w-none"
+      alt="Profila attēls"
     />
-    <div>
-      <p class="uppercase text-sm text-neutral-400 font-semibold">Lietotāja profils</p>
-      <h1 class="text-5xl md:text-6xl font-bold">{{ profileUser?.display_name }}</h1>
-      <p class="text-neutral-400 mt-1 text-md">&#64;{{ profileUser?.username }}</p>
+
+    <!-- Градиентный оверлей -->
+    <div class="absolute inset-0 bg-gradient-to-r from-dark-2/60 to-dark-2/0 pointer-events-none"></div>
+
+    <!-- Текст поверх -->
+    <div class="absolute top-6 left-6 text-white z-10">
+      <div class="flex flex-col content-between">
+
+        <div>
+          <div class="flex gap-2 items-center">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15.6878 7.99989C15.673 7.47135 15.5119 6.95671 15.2214 6.51407C14.9318 6.07226 14.5243 5.7188 14.0449 5.49462C14.2273 4.99798 14.2658 4.46044 14.1594 3.94253C14.0522 3.4238 13.8019 2.94598 13.4378 2.56226C13.0532 2.19816 12.5762 1.94862 12.0575 1.84062C11.5396 1.73426 11.002 1.77271 10.5054 1.95516C10.282 1.47489 9.92941 1.06662 9.48677 0.776983C9.04414 0.487347 8.5295 0.325347 8.00014 0.312256C7.47159 0.326165 6.95859 0.486529 6.51677 0.776983C6.07495 1.06744 5.72395 1.47571 5.50223 1.95516C5.00477 1.77271 4.46559 1.73262 3.94605 1.84062C3.4265 1.94698 2.94786 2.19735 2.56332 2.56226C2.19923 2.9468 1.9505 3.42544 1.84495 3.94335C1.73859 4.46126 1.7795 4.9988 1.96277 5.49462C1.4825 5.7188 1.07341 6.07144 0.782136 6.51326C0.490864 6.95507 0.328045 7.47053 0.3125 7.99989C0.328864 8.52926 0.490864 9.04389 0.782136 9.48653C1.07341 9.92835 1.4825 10.2818 1.96277 10.5052C1.7795 11.001 1.73859 11.5385 1.84495 12.0564C1.95132 12.5752 2.19923 13.053 2.5625 13.4375C2.94705 13.8 3.42486 14.0487 3.94277 14.1559C4.46068 14.2639 4.99823 14.2246 5.49486 14.0446C5.71905 14.5241 6.07168 14.9315 6.51432 15.222C6.95614 15.5116 7.47159 15.6728 8.00014 15.6875C8.5295 15.6744 9.04414 15.5133 9.48677 15.2236C9.92941 14.934 10.282 14.5249 10.5054 14.0454C10.9996 14.241 11.5412 14.2876 12.0624 14.1796C12.5828 14.0716 13.0606 13.8139 13.437 13.4375C13.8133 13.0612 14.0719 12.5833 14.1799 12.0622C14.2879 11.541 14.2412 10.9993 14.0449 10.5052C14.5243 10.281 14.9318 9.92835 15.2222 9.48571C15.5119 9.04389 15.673 8.52844 15.6878 7.99989ZM6.90541 11.1499L4.09986 8.34516L5.15777 7.27989L6.85304 8.97517L10.453 5.0528L11.5551 6.07226L6.90541 11.1499Z" fill="#1D9BF0"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M4.09986 8.34516L6.90541 11.1499L11.5551 6.07226L10.453 5.0528L6.85304 8.97517L5.15777 7.27989L4.09986 8.34516Z" fill="white"/>
+            </svg>
+            <p class="text-gray-1 font-medium text-[12px]">Verificēts artists</p>
+          </div>
+
+          <h1 class="text-[84px] font-bold tracking-tighter leading-[90px]">{{ profileUser?.username }}</h1>
+          <p class="text-[16px] font-medium text-gray-1">{{ profileUser.subscribers_count }} sekotāji</p>
+        </div>
+      </div>
+
+      <div class="mt-[76px] flex gap-3">
+        <button class="py-2 pl-4 pr-6 font-medium rounded-full bg-white text-dark-3 hover:bg-gray-1 transition-all transition-300 flex gap-2 items-center">
+          <svg width="16px" height="16px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#171717" stroke-width="1.5"><path d="M6.90588 4.53682C6.50592 4.2998 6 4.58808 6 5.05299V18.947C6 19.4119 6.50592 19.7002 6.90588 19.4632L18.629 12.5162C19.0211 12.2838 19.0211 11.7162 18.629 11.4838L6.90588 4.53682Z" fill="#171717" stroke="#171717" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Atskaņot
+        </button>
+
+        <button class="py-2 pl-4 pr-6 font-medium  border border-white rounded-full hover:bg-white/10 transition-all transition-300 flex gap-2 items-center">
+          <svg width="20px" height="20px" stroke-width="2.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF"><path d="M5 13L9 17L19 7" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Sekot
+        </button>
+      </div>
+
+    </div>
+
+    <div class="absolute top-5 right-6 text-white z-10">
+      <img
+        [src]="profileUser?.photo || 'assets/default-avatar.png'"
+        alt="Profils"
+        class="w-[254px] h-[254px] rounded-full object-cover select-none"
+      />
     </div>
   </div>
 
-  <!-- Details -->
-  <div class="mt-8 space-y-2 text-neutral-300">
-    <p *ngIf="profileUser?.bio">{{ profileUser.bio }}</p>
-    <p *ngIf="profileUser?.name || profileUser?.surname" class="text-sm text-neutral-500">
-      {{ profileUser.name }} {{ profileUser.surname }}
-    </p>
-    <p class="text-sm">Loma: <span class="text-green-400 font-medium">{{ profileUser.role }}</span></p>
-    <p class="text-sm">Sekotāji: {{ profileUser.subscribers_count }}</p>
+
+<!--  Pleilisti-->
+  <div *ngIf="playlists.length === 0" class="text-neutral-400 italic mt-6">
+    Nav neviena pleilista
   </div>
 
-  <!-- Divider -->
-  <div class="border-t border-neutral-700 mt-10 mb-6"></div>
-
-  <!-- Placeholder for content -->
-  <div class="text-neutral-500 text-center italic">
-    <p>Pleilisti un dziesmas tiks pievienoti drīzumā...</p>
+  <div *ngIf="playlists.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+    <div
+      *ngFor="let playlist of playlists"
+      class="bg-dark-3 p-4 rounded-lg shadow hover:shadow-xl transition"
+    >
+      <img
+        [src]="playlist.cover_image || 'assets/default-cover.jpg'"
+        class="w-full h-40 object-cover rounded mb-3"
+        alt="Playlist Cover"
+      />
+      <h3 class="text-lg font-semibold truncate">{{ playlist.name }}</h3>
+      <p class="text-sm text-neutral-400 truncate">{{ playlist.description }}</p>
+      <p class="text-xs text-neutral-500 mt-1">
+        {{ playlist.type === 'manual' ? 'Manuāli veidots' : playlist.type }}
+        <span *ngIf="playlist.genre"> · Žanrs: {{ playlist.genre }}</span>
+      </p>
+    </div>
   </div>
-</div>
+
+
+
+
+
+
+
+  <!--  <div class="flex flex-col md:flex-row items-center md:items-end gap-8">-->
+<!--    <img-->
+<!--      [src]="profileUser?.photo || 'assets/default-avatar.png'"-->
+<!--      alt="Profils"-->
+<!--      class="w-48 h-48 rounded-full border-4 border-neutral-700 object-cover shadow-lg select-none"-->
+<!--    />-->
+<!--    <div>-->
+<!--      <p class="uppercase text-sm text-neutral-400 font-semibold">Lietotāja profils</p>-->
+<!--      <h1 class="text-5xl md:text-6xl font-bold">{{ profileUser?.display_name }}</h1>-->
+<!--      <p class="text-neutral-400 mt-1 text-md">&#64;{{ profileUser?.username }}</p>-->
+<!--    </div>-->
+<!--  </div>-->
+
+<!--  &lt;!&ndash; Details &ndash;&gt;-->
+<!--  <div class="mt-8 space-y-2 text-neutral-300">-->
+<!--    <p *ngIf="profileUser?.bio">{{ profileUser.bio }}</p>-->
+<!--    <p *ngIf="profileUser?.name || profileUser?.surname" class="text-sm text-neutral-500">-->
+<!--      {{ profileUser.name }} {{ profileUser.surname }}-->
+<!--    </p>-->
+<!--    <p class="text-sm">Loma: <span class="text-green-400 font-medium">{{ profileUser.role }}</span></p>-->
+<!--    <p class="text-sm">Sekotāji: {{ profileUser.subscribers_count }}</p>-->
+<!--  </div>-->
+
+<!--  &lt;!&ndash; Divider &ndash;&gt;-->
+<!--  <div class="border-t border-neutral-700 mt-10 mb-6"></div>-->
+
+<!--  &lt;!&ndash; Placeholder for content &ndash;&gt;-->
+<!--  <div class="text-neutral-500 text-center italic">-->
+<!--    <p>Pleilisti un dziesmas tiks pievienoti drīzumā...</p>-->
+<!--  </div>-->
+<!--</div>-->

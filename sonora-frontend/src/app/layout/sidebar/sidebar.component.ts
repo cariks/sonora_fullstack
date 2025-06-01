@@ -11,11 +11,11 @@ export class SidebarComponent implements OnInit {
 
   navItems = [
     { label: 'Sākums', icon: 'fas fa-home', link: '/' },
-    { label: 'Iemīļotas dziesmas', icon: 'fas fa-heart', link: '/liked' },
+    { label: 'Iemīļotas dziesmas', icon: 'fas fa-heart', link: '/playlist/liked' },
     { label: 'Atskaņošanas saraksti', icon: 'fas fa-list', link: '/playlists' },
     { label: 'Augšupielādēt dziesmu', icon: 'fas fa-upload', link: '/upload' },
     { label: 'Manas dziesmas', icon: 'fas fa-music', link: '/my-songs' },
-    { label: 'Playlist 1', icon: 'fa-solid fa-square', link: '/playlist' },
+
   ];
 
   ngOnInit() {

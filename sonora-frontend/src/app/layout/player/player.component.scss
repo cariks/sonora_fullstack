@@ -57,3 +57,30 @@ input[type="range"].custom-range::-moz-range-thumb {
   border-radius: 50%;
   cursor: pointer;
 }
+
+
+
+@keyframes gradient-move {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.btn-gradient-animated {
+  background: linear-gradient(270deg, #0accbc, #11ff00, #73e352, #FFD970);
+  background-size: 300% 300%;
+  animation: gradient-move 16s ease infinite;
+  color: white;
+}
+
+.gradient-bg {
+  background: linear-gradient(270deg, #00ff95, #00e0ff, #00ff95);
+  background-size: 400% 400%;
+  animation: gradient-move 14s ease infinite;
+}

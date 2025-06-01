@@ -13,6 +13,7 @@ class Track extends Model
 
     protected $fillable = [
         'user_id',
+        'artist_id',
         'title',
         'description',
         'cover_image',
@@ -34,5 +35,15 @@ class Track extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function artist()
+    {
+        return $this->belongsTo(User::class, 'artist_id');
+    }
+
+    public function likes()
+    {
+        return $this->hasMany(\App\Models\TrackLike::class);
     }
 }

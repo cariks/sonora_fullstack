@@ -319,18 +319,16 @@ export class RegisterComponent {
         next: () => {
           // uz galveno lapu
           window.location.href = '/home';
+
         },
         error: (err) => {
           this.autoLoginLoading = false;
           console.error('Neizdevās pieslēgties:', err);
           alert('Neizdevās automātiski pieslēgties');
 
-
-
         }
       });
     });
   }
-
 
 }

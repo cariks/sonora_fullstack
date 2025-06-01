@@ -29,9 +29,9 @@
       <li *ngFor="let item of navItems">
         <a
           [routerLink]="item.link"
-          routerLinkActive="text-green-500"
+          routerLinkActive="text-green-400"
           [routerLinkActiveOptions]="{ exact: item.link === '/' }"
-          class="flex cursor-pointer hover:text-green-400 transition-[height] duration-300"
+          class="flex cursor-pointer hover:text-gray-1 transition-[height] duration-300"
           [ngClass]="collapsed ? 'flex-col justify-center items-center h-12' : 'flex-row items-center h-10 gap-3 px-1'"
         >
           <!-- icon -->

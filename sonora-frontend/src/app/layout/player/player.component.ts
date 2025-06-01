@@ -36,6 +36,12 @@ export class PlayerComponent {
   isToggleBlocked = false;
   likeStatus: 'like' | 'dislike' | null = null;
 
+  showEffects = false;
+
+  toggleEffects() {
+    this.showEffects = !this.showEffects;
+  }
+
 
   private mixerSettingsLoaded = false;
   private trackSub!: Subscription;

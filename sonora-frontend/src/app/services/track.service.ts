@@ -10,4 +10,20 @@ export class TrackService {
   getAllTracks() {
     return this.http.get<any[]>(`${this.apiUrl}/tracks`, { withCredentials: true });
   }
+
+  getLikedPlaylist() {
+    return this.http.get<any>(`${this.apiUrl}/playlists/liked`, { withCredentials: true });
+  }
+
+  getPopularPlaylist() {
+    return this.http.get<any>('/api/playlists/popular', { withCredentials: true });
+  }
+
+  getFreshPlaylist() {
+    return this.http.get<any>('/api/playlists/fresh', { withCredentials: true });
+  }
+
+  getGenrePlaylist(genreId: number) {
+    return this.http.get<any>(`/api/playlists/genre/${genreId}`, { withCredentials: true });
+  }
 }

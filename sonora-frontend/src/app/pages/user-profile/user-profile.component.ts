@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { PlaylistService } from 'src/app/services/playlist.service';
 
 @Component({
   selector: 'app-user-profile',
@@ -11,7 +12,13 @@ export class UserProfileComponent implements OnInit {
   profileUser: any;
   username: string = '';
 
-  constructor(private route: ActivatedRoute, private http: HttpClient) {}
+  playlists: any[] = [];
+
+  constructor(
+    private route: ActivatedRoute,
+    private http: HttpClient,
+    private playlistService: PlaylistService,
+  ) {}
 
   ngOnInit() {
     this.route.params.subscribe(params => {
@@ -20,6 +27,8 @@ export class UserProfileComponent implements OnInit {
         next: (res) => this.profileUser = res
       });
     });
+
+    this.loadPlaylists();
   }
 
   loadUser() {
@@ -28,5 +37,13 @@ export class UserProfileComponent implements OnInit {
         next: (res) => this.profileUser = res,
         error: (err) => console.error('User not found', err)
       });
+  }
+
+
+  loadPlaylists() {
+    this.playlistService.getUserPlaylists().subscribe({
+      next: (res) => this.playlists = res,
+      error: (err) => console.error('Error loading playlists', err)
+    });
   }
 }
