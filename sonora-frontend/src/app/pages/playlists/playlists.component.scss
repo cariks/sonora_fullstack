@@ -1,0 +1,11 @@
+.input {
+  @apply w-full h-[48px] placeholder-gray-2 bg-dark-1 pl-[18px] text-white border border-gray-4 rounded-[8px] focus:outline-none focus:ring-1 focus:ring-gray-1 transition;
+}
+
+.btn-green {
+  @apply mt-8 w-full h-[56px] flex items-center justify-center gap-2 bg-white hover:text-gray-2 transition-all duration-300 text-dark-3 font-medium rounded-[8px];
+
+  &:disabled {
+    @apply bg-neutral-600 text-white cursor-not-allowed shadow-none hover:bg-neutral-700;
+  }
+}

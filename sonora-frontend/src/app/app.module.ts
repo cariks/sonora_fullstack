@@ -27,6 +27,8 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import {ProfileAvatarComponent} from "./shared/profile-avatar/profile-avatar.component";
 import {CommonModule} from "@angular/common";
+import {PlaylistModalComponent} from "./shared/playlist-modal/playlist-modal.component";
+import {AddToPlaylistModalComponent} from "./shared/components/add-to-playlist-modal/add-to-playlist-modal.component";
 
 
 
@@ -50,19 +52,21 @@ import {CommonModule} from "@angular/common";
     AuthPageComponent,
 
   ],
-    imports: [
-        CommonModule,
-        BrowserModule,
-        AppRoutingModule,
-        HttpClientModule,
-        FormsModule,
-        BrowserAnimationsModule,
-        MatSlideToggleModule,
-        ReactiveFormsModule,
-        ProfileAvatarComponent,
+  imports: [
+    CommonModule,
+    BrowserModule,
+    AppRoutingModule,
+    HttpClientModule,
+    FormsModule,
+    BrowserAnimationsModule,
+    MatSlideToggleModule,
+    ReactiveFormsModule,
+    ProfileAvatarComponent,
+    PlaylistModalComponent,
+    AddToPlaylistModalComponent,
 
 
-    ],
+  ],
   providers: [
     {
     provide: HTTP_INTERCEPTORS,

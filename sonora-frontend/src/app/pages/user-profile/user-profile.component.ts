@@ -12,6 +12,7 @@ export class UserProfileComponent implements OnInit {
   profileUser: any;
   username: string = '';
 
+  publicTracks: any[] = [];
   playlists: any[] = [];
 
   constructor(
@@ -23,13 +24,19 @@ export class UserProfileComponent implements OnInit {
   ngOnInit() {
     this.route.params.subscribe(params => {
       const username = params['username'];
+      this.username = username;
+
       this.http.get(`http://localhost:8000/api/users/${username}`).subscribe({
-        next: (res) => this.profileUser = res
+        next: (res) => {
+          this.profileUser = res;
+          this.loadPlaylists(); // tikai pec user
+          this.loadPublicTracks();
+        },
+        error: (err) => console.error('User not found', err)
       });
     });
-
-    this.loadPlaylists();
   }
+
 
   loadUser() {
     this.http.get(`http://localhost:8000/api/users/${this.username}`)
@@ -41,9 +48,24 @@ export class UserProfileComponent implements OnInit {
 
 
   loadPlaylists() {
-    this.playlistService.getUserPlaylists().subscribe({
-      next: (res) => this.playlists = res,
+    if (!this.username) return;
+
+    this.http.get(`http://localhost:8000/api/users/${this.username}/public-playlists`).subscribe({
+      next: (res: any) => {
+        this.playlists = res.filter((p: any) => p.type === 'manual' && p.is_public);
+      },
       error: (err) => console.error('Error loading playlists', err)
+    });
+  }
+
+  loadPublicTracks() {
+    if (!this.username) return;
+
+    this.http.get(`http://localhost:8000/api/users/${this.username}/public-tracks`).subscribe({
+      next: (res: any) => {
+        this.publicTracks = res;
+      },
+      error: (err) => console.error('Error loading public tracks', err)
     });
   }
 }

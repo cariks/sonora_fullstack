@@ -18,7 +18,7 @@ class PlaylistTrack extends Model
 
     public function playlist()
     {
-        return $this->belongsTo(Playlist::class);
+        return $this->belongsTo(Playlist::class, 'playlist_id', 'playlist_id');
     }
 
     public function track()

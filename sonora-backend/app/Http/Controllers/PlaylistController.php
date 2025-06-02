@@ -51,19 +51,13 @@ class PlaylistController extends Controller
             ->where('user_id', $user->id)
             ->get()
             ->map(function ($playlist) {
-                $cover = null;
-
-                if ($playlist->type !== 'none') {
-                    $cover = asset('storage/auto_playlist_photos/' . $playlist->type . '-playlist-cover.png');
-                } elseif ($playlist->cover_image) {
-                    $cover = asset('storage/' . $playlist->cover_image);
-                }
-
                 return [
                     'id' => $playlist->playlist_id,
                     'name' => $playlist->name,
                     'description' => $playlist->description,
-                    'cover_image' => $cover,
+                    'cover_image' => $playlist->cover_image
+                        ? url('storage/' . $playlist->cover_image)
+                        : null,
                     'is_public' => $playlist->is_public,
                     'type' => $playlist->type,
                     'genre_id' => $playlist->genre_id,
@@ -76,6 +70,7 @@ class PlaylistController extends Controller
 
         return response()->json($playlists);
     }
+
 
 
     public function likedTracks()
@@ -169,6 +164,8 @@ class PlaylistController extends Controller
 
         return response()->json([
             'playlist_name' => $playlist->name,
+            'playlist_description' => $playlist->description,
+            'cover_image' => $playlist->cover_image ? asset('storage/' . $playlist->cover_image) : null,
             'tracks' => $formattedTracks
         ]);
     }
@@ -189,5 +186,56 @@ class PlaylistController extends Controller
 
         return response()->json($playlist);
     }
+
+    public function store(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'title' => 'required|string|max:60',
+            'description' => 'nullable|string|max:1000',
+            'is_public' => 'required|boolean',
+            'cover' => 'nullable|image|mimes:jpeg,png|max:10240',
+        ]);
+
+        $coverPath = null;
+        if ($request->hasFile('cover')) {
+            $coverPath = $request->file('cover')->store('playlist_covers', 'public');
+        }
+
+        $playlist = Playlist::create([
+            'user_id' => $user->id,
+            'name' => $request->title,
+            'description' => $request->description,
+            'is_public' => $request->is_public,
+            'cover_image' => $coverPath,
+        ]);
+
+        return response()->json(['message' => 'Playlist created', 'playlist' => $playlist]);
+    }
+
+    public function getPlaylistsForTrack($trackId)
+    {
+        $user = Auth::user();
+
+        $playlists = Playlist::where('user_id', $user->id)->get();
+
+        $includedPlaylists = PlaylistTrack::where('track_id', $trackId)
+            ->pluck('playlist_id')
+            ->toArray();
+
+        return response()->json([
+            'playlists' => $playlists->map(function ($playlist) use ($includedPlaylists) {
+                return [
+                    'id' => $playlist->playlist_id,
+                    'name' => $playlist->name,
+                    'type' => $playlist->type,
+                    'cover_image' => $playlist->cover_image ? asset('storage/' . $playlist->cover_image) : null,
+                    'included' => in_array($playlist->playlist_id, $includedPlaylists)
+                ];
+            })
+        ]);
+    }
+
 
 }

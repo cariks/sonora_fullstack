@@ -15,6 +15,9 @@ export class AppComponent implements OnInit {
   title = 'sonora-frontend';
   isAppReady = false;
 
+  isPlaylistModalOpen = false;
+
+
   constructor(
     private auth: AuthService,
     private router: Router,

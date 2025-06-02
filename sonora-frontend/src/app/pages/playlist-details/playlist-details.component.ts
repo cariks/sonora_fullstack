@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { PlaybackQueueService } from '../../services/playback-queue.service';
 import { PlayerService } from '../../services/player.service';
+import { PlaylistUpdateService } from '../../services/playlist-update.service';
 
 @Component({
   selector: 'app-playlist-details',
@@ -16,13 +17,19 @@ import { PlayerService } from '../../services/player.service';
 })
 export class PlaylistDetailsComponent implements OnInit, OnDestroy {
   playlistName: string = '';
+  playlistDesc: string = '';
   tracks: any[] = [];
   idOrType: string | null = null;
   playlistType: string = '';
   gradient: string = '';
   iconType: string = '';
 
+  playlistCoverImage: string | null = null;
+
   private likedUpdateSub: Subscription | null = null;
+
+  private playlistUpdateSub!: Subscription;
+
 
   constructor(
     private route: ActivatedRoute,
@@ -30,45 +37,61 @@ export class PlaylistDetailsComponent implements OnInit, OnDestroy {
     private trackLikesService: TrackLikesService,
     private playbackQueueService: PlaybackQueueService,
     private playerService: PlayerService,
+    private playlistUpdateService: PlaylistUpdateService,
+
   ) {}
 
   ngOnInit(): void {
-    this.idOrType = this.route.snapshot.paramMap.get('slug');
-    this.loadPlaylist();
+    this.route.url.subscribe(segments => {
+      const type = segments[1]?.path; // liked | manual | genre
+      const id = segments[2]?.path || null;
 
-    // ja ir liked tad atjaunojam
-    if (this.idOrType === 'liked') {
-      this.likedUpdateSub = this.trackLikesService.getLikedPlaylistUpdateObservable().subscribe(() => {
-        this.refreshTracks();
-      });
-    }
+      this.playlistType = type;
+      this.idOrType = id;
+
+      this.loadPlaylist();
+
+      if (type === 'liked') {
+        this.likedUpdateSub = this.trackLikesService.getLikedPlaylistUpdateObservable().subscribe(() => {
+          this.refreshTracks();
+        });
+      }
+    });
+
+    this.playlistUpdateSub = this.playlistUpdateService.updates$.subscribe(() => {
+      this.refreshTracks();
+    });
   }
+
 
   ngOnDestroy(): void {
     this.likedUpdateSub?.unsubscribe();
+    this.playlistUpdateSub?.unsubscribe();
   }
 
   loadPlaylist(): void {
-    if (this.idOrType) {
-      this.trackService.getTracksByPlaylist(this.idOrType).subscribe({
-        next: (res) => {
-          this.playlistName = res.playlist_name;
-          this.tracks = res.tracks;
-          this.playlistType = res.type || this.idOrType;
-          this.iconType = res.type || this.idOrType;
+    if (!this.playlistType) return;
 
-          if (res.type === 'genre' && res.gradient) {
-            this.gradient = res.gradient;
-          }
-        },
-        error: (err) => {
-          console.error('Error loading playlist', err);
-        },
-      });
+    const identifier = this.playlistType === 'liked' ? 'liked' : this.idOrType;
 
+    this.trackService.getTracksByPlaylist(identifier!).subscribe({
+      next: (res) => {
+        this.playlistName = res.playlist_name;
+        this.playlistDesc = res.playlist_description;
+        this.tracks = res.tracks;
+        this.iconType = res.type || this.playlistType;
+        this.playlistCoverImage = res.cover_image || null;
 
-    }
+        if (res.type === 'genre' && res.gradient) {
+          this.gradient = res.gradient;
+        }
+      },
+      error: (err) => {
+        console.error('Error loading playlist', err);
+      }
+    });
   }
+
 
   removeFromPlaylist(trackId: number): void {
     if (!this.idOrType) return;

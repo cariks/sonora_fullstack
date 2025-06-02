@@ -7,6 +7,7 @@ import { ViewChildren, QueryList } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { TrackLikesService } from '../../services/track-likes.service';
 import { AuthService } from '../../services/auth.service';
+import { PlaylistUpdateService } from '../../services/playlist-update.service';
 
 // Komponents, kas atbild par mūzikas atskaņošanu un playera interfeisu
 @Component({
@@ -40,6 +41,25 @@ export class PlayerComponent {
 
   showEffects = false;
 
+  showModal = false;
+  selectedTrackId = 0;
+
+  openModal(trackId: number) {
+    this.selectedTrackId = trackId;
+    this.showModal = true;
+  }
+
+  onRightClickLike(event: MouseEvent) {
+    event.preventDefault();
+    if (!this.currentTrack) return;
+
+    this.openModal(this.currentTrack.id);
+  }
+
+  closeModal = () => {
+    this.showModal = false;
+  };
+
   toggleEffects() {
     this.showEffects = !this.showEffects;
   }
@@ -52,6 +72,8 @@ export class PlayerComponent {
   private needsSync = false;
   private stemVolumeTimers: { [key: string]: any } = {};
   private mainVolumeTimer: any = null;
+
+  private likeStatusSub!: Subscription;
 
   likeTrack() {
     this.setLikeStatus('like');
@@ -126,13 +148,20 @@ export class PlayerComponent {
     private stemsMixerService: StemsMixerService,
     private cdr: ChangeDetectorRef,
     private trackLikesService: TrackLikesService,
-    private authService: AuthService
+    private authService: AuthService,
+    private playlistUpdateService: PlaylistUpdateService,
   ) {}
 
   // Inicializācija, Angular dzīves cikls / subscriptions
   ngOnInit() {
     this.playerWidth = +localStorage.getItem('playerWidth')! || this.defaultWidth;
     this.emitWidth();
+
+    this.likeStatusSub = this.playlistUpdateService.likeStatusChanged$.subscribe(() => {
+      if (this.currentTrack?.id) {
+        this.loadLikeStatus(this.currentTrack.id);
+      }
+    });
 
     this.trackSub = this.playerService.currentTrack$.subscribe(track => {
       if (track) {
@@ -206,6 +235,7 @@ export class PlayerComponent {
     this.playbackSub?.unsubscribe();
     this.timeSub?.unsubscribe();
     this.likedUpdateSub?.unsubscribe();
+    this.likeStatusSub?.unsubscribe();
   }
 
   setLikeStatus(status: 'like' | 'dislike') {

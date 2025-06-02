@@ -1,18 +1,20 @@
 <div class="p-8 text-white">
   <div
-    class="w-full h-[300px] rounded-lg mb-6 flex items-center px-8 py-2 gap-6"
+    class="w-full h-[300px] rounded-lg mb-6 flex items-center px-8 py-2 gap-6 relative z-10"
     [ngStyle]="{
-    'background-image':
-      playlistType === 'liked'
-        ? 'linear-gradient(to bottom right, #129210, #1DFA2F, #ffffff)'
-        : playlistType === 'popular'
-        ? 'linear-gradient(to bottom right, #2548BE, #46A6FF, #ffffff)'
-        : playlistType === 'fresh'
-        ? 'linear-gradient(to bottom right, #E88F00, #F6B740, #ffffff)'
-        : playlistType?.startsWith('genre-')
-        ? 'linear-gradient(to bottom right, #6b7280, #a3a3a3, #ffffff)'
-        : 'linear-gradient(to bottom right, #6b7280, #9ca3af, #ffffff)'
-     }"
+      'background-image':
+        playlistType === 'liked'
+          ? 'linear-gradient(to bottom right, #129210, #1DFA2F, #ffffff)'
+          : playlistType === 'popular'
+          ? 'linear-gradient(to bottom right, #2548BE, #46A6FF, #ffffff)'
+          : playlistType === 'fresh'
+          ? 'linear-gradient(to bottom right, #E88F00, #F6B740, #ffffff)'
+          : playlistType === 'manual'
+          ? 'linear-gradient(to bottom right, #191919, #525252, #A6A6A6)'
+          : playlistType?.startsWith('genre-')
+          ? 'linear-gradient(to bottom right, #6b7280, #a3a3a3, #ffffff)'
+          : 'linear-gradient(to bottom right, #6b7280, #9ca3af, #ffffff)'
+    }"
   >
    <div class="flex flex-row justify-between h-full w-full">
      <div class="h-full flex flex-col">
@@ -22,7 +24,9 @@
          {{ playlistName }}
        </h1>
 
-       <div class="flex items-center gap-4 mt-24">
+       <p class="text-[16px] font-medium">{{ playlistDesc }}</p>
+
+       <div class="flex items-center gap-4 mt-20">
          <button
            (click)="playEntirePlaylistSorted()"
            class="py-2 pl-4 pr-6 font-medium rounded-full bg-white text-dark-3 hover:bg-gray-1 transition-all transition-300 flex gap-2 items-center">
@@ -40,8 +44,19 @@
      </div>
 
      <div class="h-full content-center">
-         <!-- SVG ikona  -->
-         <div class="w-[112px] h-[112px] mr-14">
+         <!-- SVG ikona vai attels -->
+       <div
+         class=" rounded-lg overflow-hidden"
+         [ngClass]="playlistCoverImage ? 'w-[224px] h-[224px] mr-2' : 'w-[112px] h-[112px] mr-14'"
+       >
+         <img
+             *ngIf="playlistCoverImage; else iconFallback"
+             [src]="playlistCoverImage"
+             alt="Cover"
+             class="w-full h-full object-cover"
+           />
+           <ng-template #iconFallback>
+
            <svg *ngIf="iconType === 'liked'" width="112" height="112" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
              <path fill-rule="evenodd" clip-rule="evenodd"
                    d="M11.9999 3.94228C13.1757 2.85872 14.7069 2.25 16.3053 2.25C18.0313 2.25 19.679 2.95977 20.8854 4.21074C22.0832 5.45181 22.75 7.1248 22.75 8.86222C22.75 10.5997 22.0831 12.2728 20.8854 13.5137C20.089 14.3393 19.2938 15.1836 18.4945 16.0323C16.871 17.7562 15.2301 19.4985 13.5256 21.14L13.5216 21.1438C12.6426 21.9779 11.2505 21.9476 10.409 21.0754L3.11399 13.5136C0.62867 10.9374 0.62867 6.78707 3.11399 4.21085C5.54605 1.68984 9.46239 1.60032 11.9999 3.94228Z"
@@ -65,19 +80,20 @@
              <path d="M12 16V19C12 20.1046 11.1046 21 10 21H9C7.89543 21 7 20.1046 7 19V18C7 16.8954 7.89543 16 9 16H12ZM12 16V8M12 8V4L17 3V7L12 8Z"
                    stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round"></path>
            </svg>
+
+           </ng-template>
+
          </div>
      </div>
    </div>
-
-
-
   </div>
 
 
-  <h1 class="text-3xl font-bold mb-4">{{ playlistName }}</h1>
+  <div *ngIf="sortedTracks.length === 0" class="text-center text-gray-2 text-lg py-4">
+    Šajā saraksta nav nevienas dziesmas.
+  </div>
 
-
-
+  <!-- dziesmas-->
   <div *ngFor="let track of sortedTracks; let i = index"
        class="flex items-center gap-4 p-2 rounded-lg hover:bg-dark-1 transition cursor-pointer flex justify-between"
        (click)="playFromIndex(i)">
@@ -92,16 +108,9 @@
 
     <div class="p-4">
       <button (click)="removeFromPlaylist(track.id)"
-              class="hover:text-red-300 font-medium text-[16px]"
+              class="hover:text-red-500 font-medium text-[16px]"
       >Dzēst
       </button>
     </div>
   </div>
-
-
-
-
-  <ng-template #empty>
-    <p class="text-neutral-400">Šajā sarakstā vēl nav nevienas dziesmas.</p>
-  </ng-template>
 </div>

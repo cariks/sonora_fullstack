@@ -33,8 +33,8 @@
       />
       <p class="text-red-500 text-sm" *ngIf="registerForm.get('username')?.touched && registerForm.get('username')?.invalid">
         <span *ngIf="registerForm.get('username')?.errors?.['required']">Lūdzu ievadi lietotājvārdu</span>
-        <span *ngIf="registerForm.get('username')?.errors?.['minlength']">Minimālais garums — 3 simboli</span>
-        <span *ngIf="registerForm.get('username')?.errors?.['maxlength']">Maksimālais garums — 60 simboli</span>
+        <span *ngIf="registerForm.get('username')?.errors?.['minlength']">Minimālais garums - 3 simboli</span>
+        <span *ngIf="registerForm.get('username')?.errors?.['maxlength']">Maksimālais garums - 60 simboli</span>
         <span *ngIf="registerForm.get('username')?.errors?.['pattern']">Nedrīkst saturēt: %, /, \, &#64;, ?</span>
       </p>
 

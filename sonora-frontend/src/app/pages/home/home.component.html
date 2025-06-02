@@ -3,26 +3,34 @@
 
   <div class="flex overflow-x-auto gap-6 pb-2 scrollbar-hide">
     <a *ngFor="let playlist of playlists"
-       [routerLink]="'/playlist/' + playlist.identifier"
+       [routerLink]="['/playlist', playlist.type, playlist.id]"
        class="w-[250px] aspect-square rounded-lg shadow transition relative group cursor-pointer flex-shrink-0"
     >
       <!-- bg -->
-      <div class="relative w-full h-full rounded-lg flex items-center justify-center"
-           [ngStyle]="{
-        'background': playlist.type === 'liked'
-          ? 'linear-gradient(to bottom right, #129210, #1DFA2F, #ffffff)' :
-          playlist.type === 'popular'
-          ? 'linear-gradient(to bottom right, #2548BE, #46A6FF, #ffffff)' :
-          playlist.type === 'fresh'
-          ? 'linear-gradient(to bottom right, #E88F00, #F6B740, #ffffff)' :
-          playlist.type === 'genre'
-          ? playlist.gradient :
-          'linear-gradient(to bottom right, #6b7280, #9ca3af, #ffffff)'
-     }">
+      <div
+        class="relative w-full h-full rounded-lg flex items-center justify-center overflow-hidden"
+        [ngStyle]="!playlist.cover_image ? {
+    'background': playlist.type === 'liked'
+      ? 'linear-gradient(to bottom right, #129210, #1DFA2F, #ffffff)' :
+        playlist.type === 'popular'
+      ? 'linear-gradient(to bottom right, #2548BE, #46A6FF, #ffffff)' :
+        playlist.type === 'fresh'
+      ? 'linear-gradient(to bottom right, #E88F00, #F6B740, #ffffff)' :
+        playlist.type === 'genre'
+      ? playlist.gradient :
+        'linear-gradient(to bottom right, #6b7280, #9ca3af, #ffffff)'
+  } : {}"
+      >
+        <!-- paradam attelu ja ir -->
+        <img
+          *ngIf="playlist.cover_image"
+          [src]="playlist.cover_image"
+          alt="Cover"
+          class="absolute inset-0 w-full h-full object-cover rounded-lg"
+        />
 
-
-      <!-- SVG иконка -->
-        <div class="w-20 h-20">
+        <!-- ikona -->
+        <div class="w-20 h-20 z-10">
           <svg *ngIf="playlist.type === 'liked'" width="72" height="72" viewBox="0 0 24 24" fill="white"
                xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" clip-rule="evenodd"
@@ -64,12 +72,12 @@
 </div>
 
 
-<!-- Dziesmas -->
+<!-- dziesmas -->
 <div class="px-8 pt-4 text-white">
   <h1 class="text-[36px] font-semibold mb-4 tracking-tight">Tavas dziesmas</h1>
 
   <!-- scroll -->
-  <div class="flex overflow-x-auto gap-6 pb-2 scrollbar-hide">
+  <div class="flex overflow-x-auto gap-6 pb-2 scrollbar-hide " style="scrollbar-width: none; -ms-overflow-style: none;">
     <div
       *ngFor="let track of tracks; let i = index"
       class="min-w-[200px] max-w-[250px] aspect-square bg-neutral-800 rounded-lg shadow hover:bg-neutral-700 transition relative group cursor-pointer flex-shrink-0"

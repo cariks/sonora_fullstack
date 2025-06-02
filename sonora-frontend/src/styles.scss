@@ -148,3 +148,11 @@ body.no-transition * {
   transition: all 1500ms cubic-bezier(.09,.98,0,1);
 }
 
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;           /* Firefox */
+  -ms-overflow-style: none;        /* IE 10+ */
+}

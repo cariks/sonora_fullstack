@@ -61,27 +61,70 @@
   <div *ngIf="playlists.length === 0" class="text-neutral-400 italic mt-6">
     Nav neviena pleilista
   </div>
+  <h2 class="text-xl font-semibold mb-4 mt-6">Publiskie saraksti</h2>
 
-  <div *ngIf="playlists.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
-    <div
-      *ngFor="let playlist of playlists"
-      class="bg-dark-3 p-4 rounded-lg shadow hover:shadow-xl transition"
+
+  <div class="flex overflow-x-auto gap-6 pb-2 scrollbar-hide">
+    <a *ngFor="let playlist of playlists"
+       [routerLink]="['/playlist', playlist.type, playlist.id]"
+       class="w-[250px] aspect-square rounded-lg shadow transition relative group cursor-pointer flex-shrink-0"
     >
-      <img
-        [src]="playlist.cover_image || 'assets/default-cover.jpg'"
-        class="w-full h-40 object-cover rounded mb-3"
-        alt="Playlist Cover"
-      />
-      <h3 class="text-lg font-semibold truncate">{{ playlist.name }}</h3>
-      <p class="text-sm text-neutral-400 truncate">{{ playlist.description }}</p>
-      <p class="text-xs text-neutral-500 mt-1">
-        {{ playlist.type === 'manual' ? 'Manuāli veidots' : playlist.type }}
-        <span *ngIf="playlist.genre"> · Žanrs: {{ playlist.genre }}</span>
+      <div class="relative w-full h-full rounded-lg overflow-hidden">
+        <!-- Если есть изображение — показываем -->
+        <img
+          *ngIf="playlist.cover_image"
+          [src]="'http://localhost:8000/storage/' + playlist.cover_image"
+          alt="Cover"
+          class="absolute inset-0 w-full h-full object-cover rounded-lg"
+        />
+
+        <!-- Если изображения нет — фон и иконка -->
+        <div
+          *ngIf="!playlist.cover_image"
+          class="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-600 to-gray-400 flex items-center justify-center"
+        >
+          <svg width="72" height="72" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M10 21H9C7.89543 21 7 20.1046 7 19V18C7 16.8954 7.89543 16 9 16H12V8V4L17 3V7L12 8V16V19C12 20.1046 11.1046 21 10 21Z"
+              fill="#ffffff"
+            ></path>
+            <path
+              d="M12 16V19C12 20.1046 11.1046 21 10 21H9C7.89543 21 7 20.1046 7 19V18C7 16.8954 7.89543 16 9 16H12ZM12 16V8M12 8V4L17 3V7L12 8Z"
+              stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round"
+            ></path>
+          </svg>
+        </div>
+      </div>
+
+      <p class="text-[20px] font-semibold pt-2 px-2 truncate">
+        {{ playlist.name }}
       </p>
+    </a>
+  </div>
+
+
+
+
+
+  <div class="mt-10">
+    <h2 class="text-xl font-semibold mb-4">Publiskās dziesmas</h2>
+
+    <div *ngIf="publicTracks.length === 0" class="text-gray-400">Nav publisko dziesmu.</div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div *ngFor="let track of publicTracks" class="bg-neutral-800 rounded-lg p-4 flex items-center space-x-4">
+        <img [src]="track.cover_image" alt="Cover" class="w-16 h-16 object-cover rounded" *ngIf="track.cover_image">
+        <div class="flex-1">
+          <div class="text-white font-semibold">{{ track.title }}</div>
+          <div class="text-sm text-gray-400">{{ track.artist_name }}</div>
+        </div>
+      </div>
     </div>
   </div>
 
 
+
+</div>
 
 
 

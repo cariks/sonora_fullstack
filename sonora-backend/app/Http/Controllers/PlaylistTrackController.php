@@ -13,48 +13,61 @@ class PlaylistTrackController extends Controller
     {
         $user = $request->user();
         $trackId = $request->input('track_id');
-        $playlistType = $request->input('playlist_type'); // piemeram liked
+        $playlistId = $request->input('playlist_id');
 
         $playlist = Playlist::where('user_id', $user->id)
-            ->where('type', $playlistType)
+            ->where('playlist_id', $playlistId)
             ->firstOrFail();
 
-        // parbaude vai dziesma jau ir pievienota
-        $exists = PlaylistTrack::where('playlist_id', $playlist->playlist_id)
+        $exists = PlaylistTrack::where('playlist_id', $playlistId)
             ->where('track_id', $trackId)
             ->exists();
 
         if (!$exists) {
-            $maxPosition = PlaylistTrack::where('playlist_id', $playlist->playlist_id)->max('position') ?? 0;
+            $maxPosition = PlaylistTrack::where('playlist_id', $playlistId)->max('position') ?? 0;
 
             PlaylistTrack::create([
-                'playlist_id' => $playlist->playlist_id,
+                'playlist_id' => $playlistId,
                 'track_id' => $trackId,
                 'position' => $maxPosition + 1,
             ]);
+
+
+            if ($playlist->type === 'liked') {
+                \App\Models\TrackLike::updateOrCreate(
+                    ['user_id' => $user->id, 'track_id' => $trackId],
+                    ['like_status' => 'like']
+                );
+            }
         }
 
-        return response()->json(['message' => 'Track added to playlist']);
+        return response()->json(['message' => 'Track added']);
     }
+
 
     public function removeFromPlaylist(Request $request)
     {
         $user = $request->user();
         $trackId = $request->input('track_id');
-        $playlistType = $request->input('playlist_type');
+        $playlistId = $request->input('playlist_id');
 
         $playlist = Playlist::where('user_id', $user->id)
-            ->where('type', $playlistType)
-            ->first();
+            ->where('playlist_id', $playlistId)
+            ->firstOrFail();
 
-        if ($playlist) {
-            PlaylistTrack::where('playlist_id', $playlist->playlist_id)
+        PlaylistTrack::where('playlist_id', $playlistId)
+            ->where('track_id', $trackId)
+            ->delete();
+
+        if ($playlist->type === 'liked') {
+            \App\Models\TrackLike::where('user_id', $user->id)
                 ->where('track_id', $trackId)
                 ->delete();
         }
 
-        return response()->json(['message' => 'Track removed from playlist']);
+        return response()->json(['message' => 'Track removed']);
     }
+
 
     public function getTracksByPlaylist(Request $request, $identifier)
     {
@@ -101,4 +114,69 @@ class PlaylistTrackController extends Controller
             'tracks' => $tracks,
         ]);
     }
+
+    public function getPlaylistsForTrack(Request $request, $trackId)
+    {
+        $user = $request->user();
+
+        $playlistIds = \App\Models\PlaylistTrack::whereHas('playlist', function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })
+            ->where('track_id', $trackId)
+            ->pluck('playlist_id');
+
+        return response()->json($playlistIds);
+    }
+
+    public function addTrackToPlaylist($playlistId, $trackId)
+    {
+        $user = auth()->user();
+
+        $playlist = \App\Models\Playlist::where('user_id', $user->id)->where('playlist_id', $playlistId)->firstOrFail();
+
+        $alreadyExists = \App\Models\PlaylistTrack::where('playlist_id', $playlistId)
+            ->where('track_id', $trackId)
+            ->exists();
+
+        if (!$alreadyExists) {
+            $maxPosition = \App\Models\PlaylistTrack::where('playlist_id', $playlistId)->max('position') ?? 0;
+
+            \App\Models\PlaylistTrack::create([
+                'playlist_id' => $playlistId,
+                'track_id' => $trackId,
+                'position' => $maxPosition + 1,
+            ]);
+
+            if ($playlist->type === 'liked') {
+                // arī uzlikt like status
+                \App\Models\TrackLike::updateOrCreate(
+                    ['user_id' => $user->id, 'track_id' => $trackId],
+                    ['like_status' => 'like']
+                );
+            }
+        }
+
+        return response()->json(['message' => 'Track added']);
+    }
+
+    public function removeTrackFromPlaylist($playlistId, $trackId)
+    {
+        $user = auth()->user();
+
+        $playlist = \App\Models\Playlist::where('user_id', $user->id)->where('playlist_id', $playlistId)->firstOrFail();
+
+        \App\Models\PlaylistTrack::where('playlist_id', $playlistId)
+            ->where('track_id', $trackId)
+            ->delete();
+
+        if ($playlist->type === 'liked') {
+            \App\Models\TrackLike::where('user_id', $user->id)
+                ->where('track_id', $trackId)
+                ->delete();
+        }
+
+        return response()->json(['message' => 'Track removed']);
+    }
+
+
 }

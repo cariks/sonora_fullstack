@@ -5,6 +5,15 @@ module.exports = {
   ],
   theme: {
     extend: {
+      scrollbar: {
+        none: {
+          '::-webkit-scrollbar': {
+            display: 'none',
+          },
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none',
+        },
+      },
       colors: {
         accent: '#01E733',
         'dark-3': '#0A0A0A',
@@ -14,6 +23,7 @@ module.exports = {
         'gray-3': '#454545',
         'gray-2': '#8B8B8B',
         'gray-1': '#D0D0D0',
+        'dark-123' : 'rgba(38, 38, 38, 0.2)',
         white: '#FFFFFF',
       },
       fontFamily: {

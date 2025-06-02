@@ -60,6 +60,9 @@ Route::middleware('auth:sanctum')->group(function () { // Like dislike
 });
 Route::get('/tracks/{trackId}/like-status', [TrackLikeController::class, 'getStatus']);
 
+Route::get('/users/{username}/public-tracks', [UserController::class, 'publicTracks']);
+
+
 
 // Playlisti
 Route::middleware('auth:sanctum')->post('/playlists/init-default', [PlaylistController::class, 'createDefaultPlaylists']);
@@ -74,6 +77,19 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::get('/playlists/{identifier}/tracks', [PlaylistController::class, 'getTracksByPlaylist']);
+
+Route::middleware('auth:sanctum')->post('/playlists/create', [PlaylistController::class, 'store']);
+// pievienot dziesmu plejlistam
+Route::middleware('auth:sanctum')->get('/playlist-tracks/track/{trackId}', [PlaylistTrackController::class, 'getPlaylistsForTrack']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/playlist-tracks/add', [PlaylistTrackController::class, 'addToPlaylist']);
+    Route::post('/playlist-tracks/remove', [PlaylistTrackController::class, 'removeFromPlaylist']);
+});
+
+Route::get('/users/{username}/public-playlists', [UserController::class, 'publicPlaylists']);
+
+
+
 
 // Queue - rinda
 Route::get('/playback/queue', [PlaybackController::class, 'getQueue']);

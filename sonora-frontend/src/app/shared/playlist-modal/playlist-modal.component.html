@@ -1,1 +1,93 @@
-<p>playlist-modal works!</p>
+<div class="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center">
+  <div class="bg-dark-2 rounded-[16px] relative text-white overflow-hidden"
+       style="width: 1100px; height: 590px;">
+
+    <button (click)="close.emit()" class="absolute top-4 right-4 text-2xl text-white z-10">✕</button>
+
+    <div class="grid grid-cols-2 w-full h-full">
+
+      <!-- kreisa dala-->
+      <div class="flex flex-col items-center justify-center bg-dark-2 pt-3">
+        <div class="w-[80%] aspect-square flex justify-center items-center rounded-[8px] bg-dark-1 overflow-hidden outline outline-1 outline-gray-3 outline-dashed cursor-pointer"
+             (click)="fileInput.click()">
+          <ng-container *ngIf="photoPreviewUrl; else uploadPlaceholder">
+            <img [src]="photoPreviewUrl" class="w-full h-full object-cover" />
+          </ng-container>
+
+          <ng-template #uploadPlaceholder>
+            <div class="flex flex-col justify-center items-center text-center px-4">
+              <svg width="80px" height="80px" class="stroke-current text-gray-2 mb-2" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 21H3.6C3.26863 21 3 20.7314 3 20.4V3.6C3 3.26863 3.26863 3 3.6 3H20.4C20.7314 3 21 3.26863 21 3.6V13"
+                      stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M3 16L10 13L15.5 15.5"
+                      stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M16 10C14.8954 10 14 9.10457 14 8C14 6.89543 14.8954 6 16 6C17.1046 6 18 6.89543 18 8C18 9.10457 17.1046 10 16 10Z"
+                      stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M16 19H19M22 19H19M19 19V16M19 19V22"
+                      stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <p class="font-medium text-gray-2 text-[16px]">Noklikšķini vai ievelc attēlu šeit</p>
+              <p class="font-medium text-[#626262] text-[12px]">PNG, JPG (līdz 10 MB)</p>
+            </div>
+          </ng-template>
+        </div>
+
+        <div class="w-[80%] flex justify-end pt-1">
+          <p class="font-medium text-gray-2 text-[14px]">*neobligāts</p>
+        </div>
+
+
+
+        <input type="file" accept="image/png, image/jpeg" class="hidden" #fileInput (change)="onPhotoSelected($event)" />
+      </div>
+
+      <!-- laba dala -->
+      <div class="flex flex-col justify-center p-8 pt-0">
+        <h2 class="text-[42px] font-bold text-white mb-1 tracking-tightest">Izveidot jaunu sarakstu</h2>
+        <p class="text-[16px] text-gray-1 mb-4">Nosaki nosaukumu, aprakstu un redzamību</p>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-4">
+
+          <!-- Nosaukums -->
+          <div>
+            <label class="text-sm text-white block mb-1">Nosaukums</label>
+            <input class="input" formControlName="title" placeholder="Mans Saraksts"
+                   [ngClass]="{'border-red-500': form.controls['title'].invalid && form.controls['title'].touched}" />
+            <p *ngIf="form.controls['title'].invalid && form.controls['title'].touched"
+               class="text-red-500 text-sm mt-1">Nosaukums ir obligāts</p>
+          </div>
+
+          <!-- Apraksts -->
+          <div>
+            <label class="text-sm text-white block mb-1">Apraksts (neobligāts)</label>
+            <textarea
+              class="input resize-none min-h-[100px] pt-3"
+              formControlName="description"
+              placeholder="..."
+              rows="2"
+            ></textarea>
+          </div>
+
+
+          <!-- Publisks -->
+          <div class="flex items-center gap-2 mt-1">
+            <input type="checkbox" id="is_public" formControlName="is_public"
+                   class="w-4 h-4 appearance-none border border-gray-4 bg-[#2a2a2a] rounded-sm transition duration-200
+                checked:bg-[#444444] checked:border-white relative
+                after:content-[''] after:absolute after:top-0.5 after:left-[3px] after:w-2 after:h-2 after:border-white after:border-r-2 after:border-b-2 after:rotate-45 after:scale-75 after:opacity-0
+                checked:after:opacity-100" />
+            <label for="is_public" class="text-white text-sm">Publisks saraksts</label>
+          </div>
+
+
+
+          <!-- Kļūda -->
+          <p *ngIf="error" class="text-red-500 text-sm mt-1">{{ error }}</p>
+
+          <!-- Poga -->
+          <button type="submit" class="btn-green" [disabled]="form.invalid || loading">Izveidot</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

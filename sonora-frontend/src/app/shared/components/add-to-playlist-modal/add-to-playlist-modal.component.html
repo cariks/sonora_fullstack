@@ -1,0 +1,41 @@
+<div class="modal-backdrop">
+  <div class="modal-content" #modalWrapper>
+
+    <div class="absolute top-0 right-0 -translate-y-[300px] backdrop-blur-lg translate-x-[30px] bg-dark-1/50 p-6 rounded-[32px] w-[320px] z-50 shadow-xl text-white">
+      <h3 class="text-xl font-bold mb-8 mt-2">Pievieno dziesmu sarakstam</h3>
+
+      <div *ngIf="loading" class="text-gray-400">Notiek ielāde...</div>
+
+      <div
+        *ngIf="!loading"
+        class="flex flex-col gap-2 max-h-[300px] overflow-y-auto"
+        style="scrollbar-width: none; -ms-overflow-style: none;"
+      >
+        <div *ngFor="let p of playlists"
+             (click)="toggle(p.id)"
+             class="flex items-center gap-3 p-2 rounded-md hover:bg-dark-1/20 cursor-pointer"
+             [class.bg-dark-123]="isSelected(p.id)">
+          <ng-container *ngIf="p.cover_image; else gradient">
+            <img [src]="p.cover_image" class="w-10 h-10 rounded object-cover" />
+          </ng-container>
+          <ng-template #gradient>
+            <div class="w-10 h-10 rounded bg-gradient-to-br from-gray-600 to-gray-400 flex items-center justify-center">
+              <svg width="17px" height="17px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF" stroke-width="1.5"><path d="M10 21H9C7.89543 21 7 20.1046 7 19V18C7 16.8954 7.89543 16 9 16H12V8V4L17 3V7L12 8V16V19C12 20.1046 11.1046 21 10 21Z" fill="#FFFFFF"></path><path d="M12 16V19C12 20.1046 11.1046 21 10 21H9C7.89543 21 7 20.1046 7 19V18C7 16.8954 7.89543 16 9 16H12ZM12 16V8M12 8V4L17 3V7L12 8Z" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+          </ng-template>
+          <span class="flex-1 truncate">{{ p.name }}</span>
+          <span *ngIf="isSelected(p.id)">✔</span>
+        </div>
+      </div>
+
+      <div class="flex justify-end mt-4 gap-3">
+        <button class="px-5 py-2 text-[14px] text-white font-medium border border-white rounded-full hover:bg-white/10" (click)="close()">Atcelt</button>
+        <button class="px-8 py-2 text-[14px] text-dark-3 font-medium bg-white rounded-full hover:bg-gray-1" (click)="confirm()" [disabled]="saving">
+          Apstiprināt
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
