@@ -42,19 +42,10 @@ export class PlaylistDetailsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.route.url.subscribe(segments => {
-      const type = segments[1]?.path; // liked | manual | genre
-      const id = segments[2]?.path || null;
-
-      this.playlistType = type;
-      this.idOrType = id;
-
-      this.loadPlaylist();
-
-      if (type === 'liked') {
-        this.likedUpdateSub = this.trackLikesService.getLikedPlaylistUpdateObservable().subscribe(() => {
-          this.refreshTracks();
-        });
+    this.route.paramMap.subscribe(params => {
+      this.idOrType = params.get('id');
+      if (this.idOrType) {
+        this.loadPlaylist();
       }
     });
 
@@ -64,23 +55,22 @@ export class PlaylistDetailsComponent implements OnInit, OnDestroy {
   }
 
 
+
   ngOnDestroy(): void {
     this.likedUpdateSub?.unsubscribe();
     this.playlistUpdateSub?.unsubscribe();
   }
 
   loadPlaylist(): void {
-    if (!this.playlistType) return;
-
-    const identifier = this.playlistType === 'liked' ? 'liked' : this.idOrType;
-
-    this.trackService.getTracksByPlaylist(identifier!).subscribe({
+    this.trackService.getTracksByPlaylist(this.idOrType!).subscribe({
       next: (res) => {
         this.playlistName = res.playlist_name;
         this.playlistDesc = res.playlist_description;
         this.tracks = res.tracks;
-        this.iconType = res.type || this.playlistType;
+        this.iconType = res.type || '';
+        this.playlistType = res.type || '';
         this.playlistCoverImage = res.cover_image || null;
+        console.log('Playlist response:', res);
 
         if (res.type === 'genre' && res.gradient) {
           this.gradient = res.gradient;
@@ -91,6 +81,8 @@ export class PlaylistDetailsComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+
 
 
   removeFromPlaylist(trackId: number): void {

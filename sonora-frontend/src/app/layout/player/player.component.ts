@@ -183,7 +183,13 @@ export class PlayerComponent {
         vocals: settings.vocals_level ?? 0.5
       };
       this.cdr.detectChanges();
+
+      // startejam syncPlaybackState() tikai kad mixer settings ir ieladeti
+      if (this.isPlaying) {
+        this.syncPlaybackState();
+      }
     });
+
 
     const storedVolume = localStorage.getItem('playerVolume');
     this.volume = storedVolume ? +storedVolume : 1;
@@ -291,18 +297,16 @@ export class PlayerComponent {
 
   // Atskaņo visus audio elementus sinhroni
   private async playAll(): Promise<void> {
-    if (!this.mixerSettingsLoaded) {
-      console.warn('Mixer settings not loaded yet');
-      return;
-    }
-    if (!this.currentTrack) return;
+    if (!this.mixerSettingsLoaded || !this.currentTrack) return;
 
     try {
 
-
-      this.updateInitialVolumes();
-
       await this.waitForAllAudioToBeReady();
+
+
+      this.updateStemsEffectiveVolume(); // ← сразу применяет правильные volume
+      this.audioElement.nativeElement.volume = this.isStemsMode ? 0 : this.volume;
+
 
       const syncTime = this.currentTime;
       this.audioElement.nativeElement.currentTime = syncTime;
@@ -310,22 +314,20 @@ export class PlayerComponent {
         ref.nativeElement.currentTime = syncTime;
       });
 
-      this.applyFinalVolumeSettings();
-
-      await new Promise(resolve => setTimeout(resolve, 150));
 
       const playPromises = [
         this.audioElement.nativeElement.play().catch(e => console.warn('Main play error:', e)),
         ...this.stemAudioElements.map(ref =>
           ref.nativeElement.play().catch(e => console.warn('Stem play error:', e)))
       ];
-
       await Promise.all(playPromises);
 
     } catch (e) {
       console.error('PlayAll error:', e);
     }
   }
+
+
 
   private waitForAllAudioToBeReady(): Promise<void> {
     const audioElements: HTMLAudioElement[] = [

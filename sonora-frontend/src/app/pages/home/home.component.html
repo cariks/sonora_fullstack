@@ -3,7 +3,7 @@
 
   <div class="flex overflow-x-auto gap-6 pb-2 scrollbar-hide">
     <a *ngFor="let playlist of playlists"
-       [routerLink]="['/playlist', playlist.type, playlist.id]"
+       [routerLink]="['/playlist', playlist.id]"
        class="w-[250px] aspect-square rounded-lg shadow transition relative group cursor-pointer flex-shrink-0"
     >
       <!-- bg -->

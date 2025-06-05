@@ -17,6 +17,7 @@ import {NgClass, NgIf} from "@angular/common";
 })
 export class PlaylistModalComponent {
   @Output() close = new EventEmitter<void>();
+  @Output() playlistCreated = new EventEmitter<void>();
 
   form: FormGroup;
   photoPreviewUrl: string | null = null;
@@ -75,6 +76,7 @@ export class PlaylistModalComponent {
       console.error(err);
     } finally {
       this.loading = false;
+      this.playlistCreated.emit();
       this.close.emit();
     }
   }

@@ -86,6 +86,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/playlist-tracks/remove', [PlaylistTrackController::class, 'removeFromPlaylist']);
 });
 
+// dzest sarakstu
+Route::delete('/playlists/{id}', [PlaylistController::class, 'destroy']);
+
+
 Route::get('/users/{username}/public-playlists', [UserController::class, 'publicPlaylists']);
 
 

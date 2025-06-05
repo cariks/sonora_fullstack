@@ -45,4 +45,13 @@ export class PlaylistService {
       withCredentials: true
     });
   }
+
+  deletePlaylist(id: number) {
+    return this.http.delete(`/api/playlists/${id}`);
+  }
+
+  onDeletePlaylist(): void {
+    this.loadPlaylists();
+    alert('Plejlists tika izdzēsts.');
+  }
 }

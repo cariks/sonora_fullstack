@@ -30,16 +30,16 @@ module.exports = {
         sf: ['"SF Pro Display"', 'sans-serif'],
       },
       animation: {
-        'gradient-pulse': 'gradientPulse 15s ease-in-out infinite',
+        'gradient-pulse': 'gradientPulse 12s ease-in-out infinite',
       },
       keyframes: {
         gradientPulse: {
           '0%, 100%': {
             transform: 'scale(1)',
-            filter: 'brightness(160%)',
+            filter: 'brightness(170%)',
           },
           '50%': {
-            transform: 'scale(1.1)',
+            transform: 'scale(1.2)',
             filter: 'brightness(100%)',
           },
         },

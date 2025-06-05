@@ -166,6 +166,7 @@ class PlaylistController extends Controller
             'playlist_name' => $playlist->name,
             'playlist_description' => $playlist->description,
             'cover_image' => $playlist->cover_image ? asset('storage/' . $playlist->cover_image) : null,
+            'type' => $playlist->type,
             'tracks' => $formattedTracks
         ]);
     }
@@ -236,6 +237,26 @@ class PlaylistController extends Controller
             })
         ]);
     }
+
+    public function destroy($id)
+    {
+        $user = Auth::user();
+
+        $playlist = Playlist::where('playlist_id', $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$playlist) {
+            return response()->json(['message' => 'Playlist not found'], 404);
+        }
+
+        PlaylistTrack::where('playlist_id', $id)->delete();
+
+        $playlist->delete();
+
+        return response()->json(['message' => 'Playlist deleted successfully']);
+    }
+
 
 
 }

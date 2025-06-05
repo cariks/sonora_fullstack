@@ -116,7 +116,7 @@
   }"
               class="transition-opacity duration-200"
             >
-              <!-- Иконка НЕ лайкнутого -->
+              <!-- ikona - no like -->
               <svg *ngIf="likeStatus !== 'like'" width="36" height="36" stroke-width="1.5" viewBox="0 0 24 24" fill="none"
                    xmlns="http://www.w3.org/2000/svg" color="#FFFFFF">
                 <path d="M8 12H12M16 12H12M12 12V8M12 12V16" stroke="#FFFFFF" stroke-width="1.5"
@@ -125,7 +125,7 @@
                       stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
               </svg>
 
-              <!-- Иконка лайкнутого -->
+              <!-- ikona - liked -->
               <svg *ngIf="likeStatus === 'like'" width="36" height="36" viewBox="0 0 24 24" fill="black"
                    xmlns="http://www.w3.org/2000/svg" stroke-width="1.5">
                 <path fill-rule="evenodd" clip-rule="evenodd"
@@ -135,7 +135,7 @@
             </button>
 
 
-            <!-- Dislike button -->
+            <!-- dislike poga -->
             <button (click)="dislikeTrack()" [ngClass]="{'opacity-100': likeStatus === 'dislike', 'opacity-100 hover:opacity-800': likeStatus !== 'dislike'}" class="transition-opacity duration-200">
               <svg *ngIf="likeStatus !== 'dislike'" width="36" height="36" stroke-width="1.5" viewBox="0 0 24 24" fill="none"
                    xmlns="http://www.w3.org/2000/svg" color="#FFFFFF">

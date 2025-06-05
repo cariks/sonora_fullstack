@@ -29,6 +29,9 @@ import {ProfileAvatarComponent} from "./shared/profile-avatar/profile-avatar.com
 import {CommonModule} from "@angular/common";
 import {PlaylistModalComponent} from "./shared/playlist-modal/playlist-modal.component";
 import {AddToPlaylistModalComponent} from "./shared/components/add-to-playlist-modal/add-to-playlist-modal.component";
+import {
+  PlaylistOptionsModalComponent
+} from "./shared/components/playlist-options-modal/playlist-options-modal.component";
 
 
 
@@ -64,6 +67,7 @@ import {AddToPlaylistModalComponent} from "./shared/components/add-to-playlist-m
     ProfileAvatarComponent,
     PlaylistModalComponent,
     AddToPlaylistModalComponent,
+    PlaylistOptionsModalComponent,
 
 
   ],

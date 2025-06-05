@@ -1,16 +1,39 @@
-<div class="p-8 text-white">
-  <app-playlist-modal *ngIf="isPlaylistModalOpen" (close)="isPlaylistModalOpen = false"></app-playlist-modal>
+<div class="p-8 pt-2 text-white">
+  <app-playlist-modal
+    *ngIf="isPlaylistModalOpen"
+    (close)="isPlaylistModalOpen = false"
+    (playlistCreated)="refreshPlaylists()"
+  />
 
-
-  <button (click)="isPlaylistModalOpen = true" class="btn-green font-semibold text-[18px]">+ Jauns saraksts</button>
+  <button (click)="isPlaylistModalOpen = true" class="btn-green font-semibold text-[18px] group">
+    <svg
+      width="26px"
+      height="26px"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      class="transition-colors duration-300"
+    >
+      <path
+        d="M6 12H12M18 12H12M12 12V6M12 12V18"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+    <span class="pb-[2px]">Izveidot sarakstu</span>
+  </button>
 
 
   <h1 class="text-[36px] font-semibold mb-6 mt-4 tracking-tight">Tavi saraksti</h1>
 
   <div class="flex flex-wrap gap-6">
     <a *ngFor="let playlist of playlists"
-       [routerLink]="['/playlist', playlist.type, playlist.id]"
-       class="w-[240px] aspect-square rounded-lg shadow transition relative group cursor-pointer bg-neutral-800 hover:bg-neutral-700"
+       [routerLink]="['/playlist', playlist.id]"
+       class="w-[240px] aspect-square rounded-lg shadow transition relative group cursor-pointer"
+       (contextmenu)="onRightClickPlaylist($event, playlist)"
     >
       <!-- bg vai attēls -->
       <div
@@ -68,5 +91,26 @@
       </p>
     </a>
   </div>
+
+  <div
+    *ngIf="showOptionsModal && selectedPlaylistId"
+    [ngStyle]="{
+    position: 'fixed',
+    top: modalPosition.top,
+    left: modalPosition.left,
+    zIndex: 9999
+  }"
+  >
+    <app-playlist-options-modal
+      *ngIf="showOptionsModal"
+      [playlistId]="selectedPlaylistId!"
+      [playlistType]="selectedPlaylistType!"
+      [style.top]="modalPosition.top"
+      [style.left]="modalPosition.left"
+      (onClose)="closeOptionsModal()"
+      (onDeleted)="handleDeletedPlaylist()"
+    />
+  </div>
+
 </div>
 

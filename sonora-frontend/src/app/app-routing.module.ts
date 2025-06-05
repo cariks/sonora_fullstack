@@ -26,9 +26,7 @@ const routes: Routes = [
       { "path": 'my-songs', "component": MySongsComponent },
       { "path": 'settings', "component": SettingsComponent },
       { "path": 'user/:username', "component": UserProfileComponent },
-      { "path": 'playlist/liked', "component": PlaylistDetailsComponent },
-      { "path": 'playlist/manual/:id', "component": PlaylistDetailsComponent },
-      { "path": 'playlist/genre/:id', "component": PlaylistDetailsComponent },
+      { "path": 'playlist/:id', "component": PlaylistDetailsComponent },
 
     ]
   },
