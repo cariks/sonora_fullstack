@@ -31,6 +31,7 @@ module.exports = {
       },
       animation: {
         'gradient-pulse': 'gradientPulse 12s ease-in-out infinite',
+        'skeleton-loading': 'skeletonLoading 2.4s cubic-bezier(0.4, 0.0, 0.2, 1) infinite',
       },
       keyframes: {
         gradientPulse: {
@@ -43,10 +44,24 @@ module.exports = {
             filter: 'brightness(100%)',
           },
         },
+        skeletonLoading: {
+          '0%': { backgroundPosition: '200% 0' },
+          '100%': { backgroundPosition: '-200% 0' },
+        },
+      },
+      backgroundImage: {
+        'skeleton-gradient': 'linear-gradient(90deg, #1e1e1e 25%, #3a3a3a 50%, #1e1e1e 75%)',
       },
     },
   },
   plugins: [
-    require('tailwind-scrollbar-hide')
+    require('tailwind-scrollbar-hide'),
+    function({ addComponents }) {
+      addComponents({
+        '.skeleton': {
+          '@apply bg-skeleton-gradient bg-[length:200%_100%] animate-skeleton-loading rounded relative overflow-hidden': {},
+        },
+      })
+    }
   ],
 }

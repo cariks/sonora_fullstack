@@ -26,6 +26,7 @@ export class AuthPageComponent implements AfterViewChecked {
 
   stepLabels = [
     'Izveido kontu un lietotājvārdu',
+    'Pastāsti vairāk par sevi',
     'Izvēlies savu foto',
     'Izvēlies iecienītākos žanrus',
     'Atrodi savus mīļākos artistus'

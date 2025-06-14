@@ -16,6 +16,9 @@ return new class extends Migration
             $table->foreignId('track_id')->nullable()->constrained()->onDelete('set null');
             $table->double('current_time')->default(0);
             $table->enum('play_mode', ['off', 'repeat', 'shuffle'])->default('off');
+            $table->enum('source_type', ['playlist', 'album', 'search', 'manual'])->default('manual');
+            $table->unsignedBigInteger('source_id')->nullable();
+            $table->string('source_name')->nullable();
             $table->timestamps();
         });
     }

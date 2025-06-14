@@ -5,25 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class UserPlaybackQueue extends Model
+class EqualizerPreset extends Model
 {
-    protected $table = 'user_playback_queue';
+    protected $primaryKey = 'eq_preset_id';
 
     protected $fillable = [
         'user_id',
-        'track_id',
-        'position',
-        'is_current'
+        'name',
+        'icon',
+        'eq_setting',
+        'position'
     ];
 
     protected $casts = [
-        'is_current' => 'boolean'
+        'eq_setting' => 'array'
     ];
-
-    public function track()
-    {
-        return $this->belongsTo(Track::class);
-    }
 
     public function user()
     {

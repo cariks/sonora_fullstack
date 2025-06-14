@@ -15,8 +15,10 @@ import confetti from 'canvas-confetti';
 export class RegisterComponent {
   public step = 1;
   registerForm: FormGroup;
+  additionalInfoForm: FormGroup;
   loading = false;
   error: string | null = null;
+  maxDate: string;
 
   emailCheck$ = new Subject<string>();
   emailAvailable: boolean | null = null;
@@ -45,6 +47,10 @@ export class RegisterComponent {
   selectedArtists: number[] = [];
 
   constructor(private fb: FormBuilder, private http: HttpClient) {
+    // Set max date to today
+    const today = new Date();
+    this.maxDate = today.toISOString().split('T')[0];
+
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       username: ['', [
@@ -62,6 +68,13 @@ export class RegisterComponent {
       confirmPassword: ['', [Validators.required]]
     }, {
       validators: this.passwordsMatchValidator
+    });
+
+    // Add new form for additional info
+    this.additionalInfoForm = this.fb.group({
+      display_name: ['', [Validators.maxLength(100)]],
+      date_of_birth: [''],
+      bio: ['', [Validators.maxLength(5000)]]
     });
 
     // epasts pārbaude
@@ -124,7 +137,7 @@ export class RegisterComponent {
 
   nextStep() {
     if (this.registerForm.valid) {
-      this.step = 2; // nākamais solis
+      this.step = 2;
     } else {
       this.registerForm.markAllAsTouched();
     }
@@ -187,10 +200,10 @@ export class RegisterComponent {
 
   goToGenresStep(): void {
     if (this.selectedPhotoFile) {
-      this.step = 3;
+      this.step = 4;
     } else {
       // Ja vēlies, vari atļaut turpināt bez foto
-      this.step = 3;
+      this.step = 4;
     }
   }
 
@@ -222,7 +235,7 @@ export class RegisterComponent {
   goToArtistsStep(): void {
     if (this.selectedGenres.length >= 3) {
       this.loadSuggestedArtists();
-      this.step = 4;
+      this.step = 5;
     }
   }
 
@@ -260,6 +273,17 @@ export class RegisterComponent {
     formData.append('email', this.registerForm.value.email);
     formData.append('password', this.registerForm.value.password);
 
+    // Add additional info if provided
+    if (this.additionalInfoForm.value.display_name) {
+      formData.append('display_name', this.additionalInfoForm.value.display_name);
+    }
+    if (this.additionalInfoForm.value.date_of_birth) {
+      formData.append('date_of_birth', this.additionalInfoForm.value.date_of_birth);
+    }
+    if (this.additionalInfoForm.value.bio) {
+      formData.append('bio', this.additionalInfoForm.value.bio);
+    }
+
     if (this.tempPhotoPath) {
       formData.append('photo_path', this.tempPhotoPath);
     }
@@ -282,7 +306,7 @@ export class RegisterComponent {
               this.userEmail = this.registerForm.value.email;
               this.userPassword = this.registerForm.value.password;
               this.loading = false;
-              this.step = 5;
+              this.step = 6;
 
               confetti({
                 particleCount: 150,
@@ -329,6 +353,11 @@ export class RegisterComponent {
         }
       });
     });
+  }
+
+  // Add new method to handle additional info step
+  goToPhotoStep() {
+    this.step = 3;
   }
 
 }

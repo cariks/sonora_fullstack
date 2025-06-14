@@ -58,7 +58,57 @@ input[type="range"].custom-range::-moz-range-thumb {
   cursor: pointer;
 }
 
+/* Vertical range inputs */
+input[type="range"][orient="vertical"] {
+  writing-mode: bt-lr; /* IE */
+  -webkit-appearance: slider-vertical; /* WebKit */
+  width: 8px;
+  height: 140px;
+  padding: 0 5px;
+  background: transparent;
+}
 
+/* WebKit (Chrome, Safari) vertical slider styles */
+input[type="range"][orient="vertical"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-top: -8px;
+}
+
+input[type="range"][orient="vertical"]::-webkit-slider-runnable-track {
+  width: 8px;
+  background: #3f3f3f;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Firefox vertical slider styles */
+input[type="range"][orient="vertical"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+input[type="range"][orient="vertical"]::-moz-range-track {
+  width: 8px;
+  background: #3f3f3f;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* For Firefox, we need to rotate the track */
+@-moz-document url-prefix() {
+  input[type="range"][orient="vertical"] {
+    transform: rotate(180deg);
+  }
+}
 
 @keyframes gradient-move {
   0% {

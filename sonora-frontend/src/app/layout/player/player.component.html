@@ -7,92 +7,212 @@
   ></div>
 
   <!-- Player content -->
-  <div
-    class="flex-1 pl-1.5 flex flex-col bg-neutral-900 text-white h-full overflow-y-auto scrollbar-hidden"
-    [ngClass]="bounceClass"
-  >
+  <div class="flex-1 pl-1.5 flex flex-col bg-neutral-900 text-white h-full" [ngClass]="bounceClass">
+
     <!-- Scrollable content wrapper -->
-    <div class="p-6 flex flex-col gap-2 min-h-full">
+    <div class="flex-1 overflow-y-auto scrollbar-hidden p-6 pt-1 flex flex-col gap-1">
 
-      <!-- Current track info -->
-      <div class="flex flex-col gap-3 pt-3">
-        <img
-          *ngIf="!showEffects"
-          [src]="currentTrack?.cover_image || 'assets/blank_cover.png'"
-          class="w-full max-w-[587px] aspect-square object-cover rounded rounded-[8px] shadow mx-auto"
-          alt="Cover"
-        />
+      <!-- Current dziesmas info -->
+      <div class="flex flex-col gap-2">
 
-<!--        EFEKTI-->
-        <div *ngIf="showEffects" class="w-full max-w-[587px] aspect-square object-cover rounded rounded-[8px] shadow mx-auto bg-dark-1 p-6">
+        <!-- Source info skeleton -->
+        <div *ngIf="!isTrackDataLoaded" class="h-5 w-48 skeleton"></div>
 
-          <!-- Stems režīms -->
-          <div class="flex justify-between items-center gap-3 mt-10">
-            <div class="flex items-center gap-3">
-              <label class="text-[16px] font-semibold">Stems režīms</label>
-              <!-- Custom Stems Toggle -->
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  class="sr-only peer"
-                  [checked]="isStemsMode"
-                  [disabled]="isToggleBlocked"
-                  (change)="onStemsToggle($event)"
-                />
-                <div
-                  class="w-11 h-6 bg-neutral-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500
-    rounded-full peer peer-checked:bg-green-500 transition duration-300"
-                ></div>
-                <div
-                  class="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full
-    transition-all duration-300 peer-checked:translate-x-full"
-                ></div>
-              </label>
-            </div>
-
-
-
-            <button
-              (click)="resetStemVolumes()"
-              class="px-6 py-2 border border-gray-4 text-sm rounded bg-dark-2 hover:bg-dark-1 transition"
-            >
-              Atiestatīt
-            </button>
-          </div>
-
-          <!-- Stem skaļuma kontrole -->
-          <div>
-            <div *ngIf="stems.length > 0; else noStems" class="flex flex-col gap-4 pt-6">
-              <div *ngFor="let stem of stems" class="flex items-center gap-4">
-                <span class="capitalize w-20">{{ stem.type }}</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  [value]="stemVolumes[stem.type]"
-                  (input)="onStemVolumeInput(stem.type, $event)"
-                  class="w-full appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"
-                />
-              </div>
-            </div>
-
-            <ng-template #noStems>
-              <p class="text-neutral-500 text-sm">Šim ierakstam nav pieejamas stem celiņi.</p>
-            </ng-template>
-          </div>
-
+        <!-- Source name vai placeholder -->
+        <div *ngIf="isTrackDataLoaded" class="text-left text-[16px] font-medium h-5 tracking-tight">
+          <ng-container *ngIf="sourceType && sourceName && sourceId; else placeholder">
+            <a *ngIf="getSourceUrl()" [routerLink]="getSourceUrl()" class="text-gray-1 hover:text-white hover:underline transition-colors duration-200">
+              {{ sourceName }}
+            </a>
+            <span *ngIf="!getSourceUrl()">{{ sourceName }}</span>
+          </ng-container>
+          <ng-template #placeholder>
+            &nbsp;
+          </ng-template>
         </div>
 
 
+        <!-- Cover attels skeleton -->
+        <div *ngIf="!isTrackDataLoaded" 
+             class="w-full max-w-[587px] aspect-square rounded-[8px] skeleton mx-auto">
+        </div>
 
-        <!-- Info-->
-        <div class="flex justify-between gap-3 pt-2 pb-1">
+        <div *ngIf="isTrackDataLoaded"  
+        class="relative w-full max-w-[587px] aspect-square mx-auto">
 
+
+        <!-- Cover attels -->
+        <img
+          *ngIf="true"
+          [src]="currentTrack?.cover_image || 'assets/blank_cover.png'"
+          class="w-full h-full object-cover rounded-[12px] shadow"
+          alt="Cover"
+        />
+
+        <!-- Effects panelis -->
+        <div
+            *ngIf="showEffects"
+            class="absolute inset-0 z-30 rounded-[12px] bg-dark-2/70 backdrop-blur-xl p-6 shadow-xl"
+          >
+
+          <div class="flex space-x-3 mb-4">
+            <button (click)="selectedEffectTab = 'stems'" [class.active]="selectedEffectTab === 'stems'">Stems</button>
+            <button (click)="selectedEffectTab = 'eq'" [class.active]="selectedEffectTab === 'eq'">EQ</button>
+            <button (click)="selectedEffectTab = 'stereo'" [class.active]="selectedEffectTab === 'stereo'">Stereo</button>
+          </div>
+          
+          <div *ngIf="selectedEffectTab === 'stems'">
+            <!-- STEMS SADALA -->
+            
+            <div class="flex justify-between items-center gap-3 mt-4">
+              <div class="flex items-center gap-3">
+                <label class="text-[16px] font-semibold">Stems režīms</label>
+                <!-- Custom Stems Toggle -->
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    class="sr-only peer"
+                    [checked]="isStemsMode"
+                    (change)="onStemsToggle($event)"
+                  />
+                  <div
+                    [ngClass]="{
+                      'bg-neutral-700': !hasStems || !isStemsMode,
+                      'bg-green-500': hasStems && isStemsMode
+                    }"
+                    class="w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500
+                    rounded-full peer transition duration-300"
+                  ></div>
+                  <div
+                    class="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full
+                    transition-all duration-300 peer-checked:translate-x-full"
+                  ></div>
+                </label>
+                
+                <!-- Ziņojums, ja stems nav pieejami -->
+                <span *ngIf="!hasStems" class="text-sm text-neutral-500">
+                  Stems režīms nav pieejams šim ierakstam
+                </span>
+              </div>
+  
+              <button
+                (click)="resetStemVolumes()"
+                [disabled]="!hasStems"
+                class="px-6 py-2 border border-gray-4 text-sm rounded bg-dark-2 hover:bg-dark-1 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Atiestatīt
+              </button>
+            </div>
+  
+            <!-- Stem skaļuma kontrole -->
+            <div>
+              <div *ngIf="hasStems; else noStems" class="flex flex-col gap-4 pt-6">
+                <div *ngFor="let stem of stems" class="flex items-center gap-4">
+                  <span class="capitalize w-20">{{ stem.type }}</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    [value]="stemVolumes[stem.type]"
+                    (input)="onStemVolumeInput(stem.type, $event)"
+                    class="w-full appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"
+                  />
+                </div>
+              </div>
+  
+              <ng-template #noStems>
+                <p class="text-neutral-500 text-sm">Šim ierakstam nav pieejamas stem celiņi.</p>
+              </ng-template>
+            </div>
+          </div>
+          
+          
+
+
+          <div *ngIf="selectedEffectTab === 'eq'">
+            <!-- EKVALAIZERIS -->
+
+            <div class="flex justify-between items-center gap-4 mb-4">
+              <label class="flex items-center gap-2 font-semibold text-[16px]">
+                Ekvalaizers
+                <input type="checkbox" [(ngModel)]="eqEnabled" (change)="onEqToggle()" />
+              </label>
+            
+              <div class="flex gap-2">
+                <button (click)="resetEq()" class="px-4 py-1 bg-neutral-700 rounded text-sm">Atiestatīt</button>
+              </div>
+            </div>
+            
+            <div class="flex justify-between items-end gap-4 h-[180px] mt-4">
+              <ng-container *ngFor="let freq of eqFrequencies; let i = index">
+                <div class="flex flex-col items-center gap-2">
+                  <input
+                    type="range"
+                    min="-30"
+                    max="30"
+                    step="1"
+                    orient="vertical"
+                    class="h-[140px] w-4 appearance-none bg-neutral-700 rounded-full cursor-pointer"
+                    [value]="eqSettings[i]"
+                    (input)="onEqSliderChange(i, $event)"
+                    >          
+                    <span class="text-xs">{{ freq }}Hz</span>
+                </div>
+              </ng-container>
+            </div>
+            
+
+
+          </div>
+          
+          <div *ngIf="selectedEffectTab === 'stereo'">
+            <!-- STEREO -->
+          </div>
+          
+
+
+          </div>
+        </div>
+
+        <!-- Info skeleton -->
+        <div *ngIf="!isTrackDataLoaded" class="flex justify-between gap-3 pt-1 pb-1">
+          <div class="flex flex-col w-full gap-2">
+            <!-- Nosaukums skeleton -->
+            <div class="h-8 w-3/4 skeleton"></div>
+            <!-- Artists skeleton -->
+            <div class="h-5 w-1/2 skeleton"></div>
+          </div>
+          <!-- Like pogas skeleton -->
+          <div class="flex items-center gap-1">
+            <div class="w-9 h-9 skeleton rounded-full"></div>
+            <div class="w-9 h-9 skeleton rounded-full"></div>
+          </div>
+        </div>
+
+        <!-- Info (reals kontents) -->
+        <div *ngIf="isTrackDataLoaded && (!isFirstLoad || currentTrack)" class="flex justify-between gap-3 pt-1 pb-1">
           <div class="flex flex-col w-full">
-            <p class="text-[27px] font-semibold truncate max-w-[90%] leading-[32px]">
-              {{ currentTrack?.title || 'Nav izvēlēta dziesma' }}
-            </p>
+            <div class="flex gap-4 items-center">
+              <p class="text-[27px] font-semibold truncate max-w-[90%] leading-[32px]">
+                {{ currentTrack?.title  || 'Nav izvēlēta dziesma' }}
+  
+                
+  
+              </p>
+              <div
+                *ngIf="isTrackDataLoaded && (currentTrack?.extension === 'flac' || currentTrack?.extension === 'wav')"
+                [ngClass]="{
+                  'bg-[#FF9D00]/50 border border-[#FFD35C]/50 text-[#FFD45C]': currentTrack.extension === 'flac',
+                  'bg-[#7165EA]/50 border border-[#CC8BFF]/50 text-[#CC8BFF]': currentTrack.extension === 'wav'
+                }"
+                style="box-shadow: inset 0px 3px 12px rgba(255, 255, 255, 0.1);"
+                class="inline-block px-3 justify-center items-center rounded-[6px] text-[11px] font-semibold w-fit select-none h-[22px] "
+              >
+                {{ currentTrack.extension.toUpperCase() }}
+              </div> 
+            </div>
+            
             <a
               *ngIf="currentTrack?.artist_name"
               [routerLink]="'/user/' + currentTrack.artist_name"
@@ -100,10 +220,10 @@
             >
               {{ currentTrack.artist_name }}
             </a>
-
+            <p *ngIf="!currentTrack?.artist_name" class="text-[16px] font-medium text-gray-2">
+              Izvēlieties dziesmu no jūsu rindas vai pārskatiet
+            </p>
           </div>
-
-
 
           <div class="flex items-center gap-1">
             <!-- Like -->
@@ -111,9 +231,9 @@
               (click)="likeTrack()"
               (contextmenu)="onRightClickLike($event)"
               [ngClass]="{
-    'opacity-100': likeStatus === 'like',
-    'opacity-100 hover:opacity-80': likeStatus !== 'like'
-  }"
+                'opacity-100': likeStatus === 'like',
+                'opacity-100 hover:opacity-80': likeStatus !== 'like'
+              }"
               class="transition-opacity duration-200"
             >
               <!-- ikona - no like -->
@@ -133,7 +253,6 @@
                       fill="#FFFFFF"></path>
               </svg>
             </button>
-
 
             <!-- dislike poga -->
             <button (click)="dislikeTrack()" [ngClass]="{'opacity-100': likeStatus === 'dislike', 'opacity-100 hover:opacity-800': likeStatus !== 'dislike'}" class="transition-opacity duration-200">
@@ -158,42 +277,52 @@
               [close]="closeModal"
             ></app-add-to-playlist-modal>
 
-
           </div>
         </div>
       </div>
 
-      <!--
-<div class="mt-2 text-xs text-neutral-300 space-y-1 text-center">
-  <p *ngIf="currentTrack?.bpm">BPM: {{ currentTrack.bpm }}</p>
-  <p *ngIf="currentTrack?.key">Tonalitāte: {{ currentTrack.key }}</p>
-</div>
--->
-      <!-- Progress Bar -->
-      <div class="w-full">
-        <input
-          type="range"
-          min="0"
-          [max]="duration"
-          [value]="currentTime"
-          (input)="seek($event)"
-          (change)="onSeekEnd()"
-          (mousedown)="isSeeking = true"
-          (mouseup)="onSeekEnd()"
-          class="w-full appearance-none h-[6px] bg-neutral-700 rounded-full cursor-pointer custom-range"
-        />
-        <div class="flex justify-between font-medium text-[12px] text-gray-2 mt-[2px]">
-          <span>{{ formatTime(currentTime) }}</span>
-          <span>{{ formatTime(duration) }}</span>
+      <!-- Progress bar skeleton -->
+      <div *ngIf="!isTrackDataLoaded" class="w-full mt-3">
+        <div class="w-full h-[6px] skeleton"></div>
+        <div class="flex justify-between mt-[7px]">
+          <div class="h-4 w-12 skeleton"></div>
+          <div class="h-4 w-12 skeleton"></div>
         </div>
       </div>
 
+      <!-- Progress Bar (realais) -->
+      <div *ngIf="isTrackDataLoaded && (!isFirstLoad || currentTrack)" class="w-full mt-1">
+        <input
+          type="range"
+          min="0"
+          [max]="getTrackDuration()"
+          [value]="currentPosition"
+          step="0.1"
+          (input)="onSeekInput($event)"
+          (change)="onSeekCommit($event)"
+          [class]="(!isFirstLoad || currentTrack) ? 'w-full appearance-none h-[6px] bg-neutral-700 rounded-full cursor-pointer custom-range' : 'w-full h-[6px] bg-neutral-900 rounded-full cursor-default'"
+          [disabled]="!currentTrack"
+        />
+        <div class="flex justify-between font-medium text-[12px] text-gray-2 mt-[2px]">
+          <span [class]="(!isFirstLoad || currentTrack) ? '' : 'text-neutral-900'">{{ formatTime(currentPosition) }}</span>
+          <span [class]="(!isFirstLoad || currentTrack) ? '' : 'text-neutral-900'">{{ formatTime(getTrackDuration()) }}</span>
+        </div>
+      </div>
+
+      <!-- Placeholder for progress bar to maintain layout
+      <div *ngIf="isFirstLoad" class="w-full mt-4">
+        <div class="w-full h-[6px] bg-neutral-900 rounded-full"></div>
+        <div class="flex justify-between mt-[2px]">
+          <div class="h-4 w-12"></div>
+          <div class="h-4 w-12"></div>
+        </div>
+      </div> -->
 
       <!-- Pogas utt -->
-      <div class="w-full flex items-center justify-between mb-6">
+      <div class="w-full flex items-center justify-between mb-6 mt-4">
 
         <!-- Effects Poga (1/3) -->
-        <div class="w-1/3 flex justify-start gap-6">
+        <div class="w-1/4 flex justify-start gap-6">
           <!-- konteineris -->
           <button
             (click)="toggleEffects()"
@@ -202,9 +331,9 @@
             <!-- gradienta ikona -->
             <svg
               [ngClass]="{
-      'opacity-100': isStemsMode,
-      'opacity-0': !isStemsMode
-    }"
+                'opacity-100': isStemsMode,
+                'opacity-0': !isStemsMode
+              }"
               class="absolute w-[24px] h-[24px] transition-opacity duration-500"
               viewBox="0 0 27 27"
               xmlns="http://www.w3.org/2000/svg"
@@ -225,9 +354,6 @@
                              repeatCount="indefinite" />
                   </stop>
                 </linearGradient>
-
-
-
 
                 <!-- maska -->
                 <mask id="stemsIconMask">
@@ -258,9 +384,9 @@
             <!-- parasta ikona -->
             <svg
               [ngClass]="{
-      'opacity-0': isStemsMode,
-      'opacity-100': !isStemsMode
-    }"
+                'opacity-0': isStemsMode,
+                'opacity-100': !isStemsMode
+              }"
               class="w-[24px] h-[24px] transition-opacity duration-300"
               viewBox="0 0 27 27"
               fill="none"
@@ -276,64 +402,68 @@
               />
             </svg>
           </button>
-
-
-
-
-
-          <!--          <button>-->
-<!--            <svg width="34px" height="34px" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF"><path d="M22 6.99999C19 6.99999 13.5 6.99999 11.5 12.5C9.5 18 5 18 2 18" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 5C20 5 21.219 6.21895 22 7C21.219 7.78105 20 9 20 9" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M22 18C19 18 13.5 18 11.5 12.5C9.5 6.99999 5 7.00001 2 7" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 20C20 20 21.219 18.781 22 18C21.219 17.219 20 16 20 16" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>-->
-<!--          </button>-->
-<!--          <button>-->
-<!--            <svg width="34px" height="34px" stroke-width="2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF"><path d="M17 17H8C6.33333 17 3 16 3 12C3 8 6.33333 7 8 7H16C17.6667 7 21 8 21 12C21 13.4943 20.5348 14.57 19.865 15.3312" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M14.5 14.5L17 17L14.5 19.5" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>-->
-<!--          </button>-->
         </div>
 
         <!-- Playback Controls (1/3) -->
-        <div class="w-1/3 flex justify-center">
-          <div class="flex items-center gap-6">
-            <!-- Backward -->
-            <button
-              (click)="playPrevious()"
-              class="w-[48px] h-[48px] flex items-center justify-center text-white hover:text-[#AAAAAA] transition">
-              <svg width="44px" height="44px" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-width="1.5">
-                <path d="M6 17V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                <path d="M17.0282 18.7328C17.4217 19.0434 18 18.7632 18 18.2619V5.73813C18 5.23682 17.4217 4.95657 17.0282 5.2672L9.09652 11.5291C8.79217 11.7693 8.79217 12.2307 9.09652 12.4709L17.0282 18.7328Z"
-                      fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </button>
-
+        <div class="w-1/2 flex justify-center">
+          <div class="w-full flex items-center gap-2">
+            <!-- atpakal -->
+             <div class="w-1/3 flex justify-end">
+              <button
+                (click)="playPrevious()"
+                [disabled]="isNavigationDisabled"
+                [class]="'w-[48px] h-[48px] flex items-center justify-center transition ' + 
+                  (isNavigationDisabled ? 'text-neutral-500 cursor-not-allowed' : 'text-white hover:text-[#AAAAAA]')"
+              >
+                <svg width="44px" height="44px" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-width="1.5" class="pointer-events-none">
+                  <path d="M6 17V7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M17.0282 18.7328C17.4217 19.0434 18 18.7632 18 18.2619V5.73813C18 5.23682 17.4217 4.95657 17.0282 5.2672L9.09652 11.5291C8.79217 11.7693 8.79217 12.2307 9.09652 12.4709L17.0282 18.7328Z"
+                        fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+            </div>
             <!-- Play/Pauza -->
-            <button
-              (click)="togglePlay()"
-              class="w-[54px] h-[54px] flex items-center justify-center text-[#171717] bg-white rounded-full hover:bg-[#E8E8E8] transition"
-            >
-              <i
-                class="fas text-2xl"
-                [ngClass]="{
-            'fa-play pl-[4px]': !isPlaying,
-            'fa-pause': isPlaying
-          }"
-              ></i>
-            </button>
+             <div class="w-1/3 flex justify-center">
+              <button
+                (click)="togglePlay()"
+                [disabled]="isPlayButtonDisabled"
+                [class]="'w-[54px] h-[54px] flex items-center justify-center text-[#171717] rounded-full transition ' + 
+                  (isPlayButtonDisabled ? 'bg-neutral-500 cursor-not-allowed' : 'bg-white hover:bg-[#AAAAAA]')"
+              >
+                <i
+                  class="fas text-2xl"
+                  [ngClass]="{
+                    'fa-play pl-[4px]': !isPlaying,
+                    'fa-pause': isPlaying
+                  }"
+                ></i>
+              </button>
+             </div>
+            
 
-            <!-- Talak -->
-            <button
-              (click)="playNext()"
-              class="w-[48px] h-[48px] flex items-center justify-center text-white hover:text-[#AAAAAA] transition">
-              <svg width="44px" height="44px" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-width="1.5">
-                <path d="M18 7V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                <path d="M6.97179 5.2672C6.57832 4.95657 6 5.23682 6 5.73813V18.2619C6 18.7632 6.57832 19.0434 6.97179 18.7328L14.9035 12.4709C15.2078 12.2307 15.2078 11.7693 14.9035 11.5291L6.97179 5.2672Z"
-                      fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                </path>
-              </svg>
-            </button>
+            <!-- talak -->
+             <div class="w-1/3 flex justify-start">
+              <button
+                (click)="playNext()"
+                [disabled]="isNavigationDisabled"
+                [class]="'w-[48px] h-[48px] flex items-center justify-center transition ' + 
+                  (isNavigationDisabled ? 'text-neutral-500 cursor-not-allowed' : 'text-white hover:text-[#AAAAAA]')"
+              >
+                <svg width="44px" height="44px" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-width="1.5" class="pointer-events-none">
+                  <path d="M18 7V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M6.97179 5.2672C6.57832 4.95657 6 5.23682 6 5.73813V18.2619C6 18.7632 6.57832 19.0434 6.97179 18.7328L14.9035 12.4709C15.2078 12.2307 15.2078 11.7693 14.9035 11.5291L6.97179 5.2672Z"
+                        fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  </path>
+                </svg>
+              </button>
+             </div>
+            
           </div>
         </div>
 
         <!-- Skalums -->
-        <div class="w-1/3 flex justify-end pl-12">
-          <div class="flex items-center gap-2 w-full">
+        <div class="w-1/4 flex justify-end">
+          <div class="flex items-center gap-2 pl-4">
             <svg width="24px" height="24px" viewBox="0 0 24 24" stroke-width="1.5" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.9697 6.96967C17.2626 6.67678 17.7374 6.67678 18.0303 6.96967L17.5 7.5C18.0303 6.96967 18.0306 6.96989 18.0308 6.97012L18.0313 6.9706L18.0323 6.97168L18.0349 6.97426L18.0416 6.98113L18.0613 7.00165C18.0771 7.01833 18.0982 7.04101 18.1237 7.06959C18.1747 7.1267 18.2439 7.20756 18.325 7.31121C18.487 7.51816 18.6983 7.8181 18.9084 8.20336C19.3286 8.97364 19.75 10.0966 19.75 11.5C19.75 12.9034 19.3286 14.0264 18.9084 14.7966C18.6983 15.1819 18.487 15.4818 18.325 15.6888C18.2439 15.7924 18.1747 15.8733 18.1237 15.9304C18.0982 15.959 18.0771 15.9817 18.0613 15.9984L18.0416 16.0189L18.0349 16.0257L18.0323 16.0283L18.0313 16.0294L18.0308 16.0299C18.0306 16.0301 18.0303 16.0303 17.5207 15.5207L18.0303 16.0303C17.7374 16.3232 17.2626 16.3232 16.9697 16.0303C16.6776 15.7383 16.6768 15.2654 16.9671 14.9723C16.9679 14.9714 16.9688 14.9705 16.9697 14.9697L17.5 15.5C16.9697 14.9697 16.9695 14.9699 16.9693 14.9701L16.9689 14.9705L16.9682 14.9711L16.9673 14.9721L16.9724 14.9667C16.9786 14.9602 16.9897 14.9482 17.0052 14.9309C17.0362 14.8962 17.0842 14.8404 17.1437 14.7643C17.263 14.6119 17.4267 14.3806 17.5916 14.0784C17.9214 13.4736 18.25 12.5966 18.25 11.5C18.25 10.4034 17.9214 9.52636 17.5916 8.92164C17.4267 8.6194 17.263 8.38809 17.1437 8.23567C17.0842 8.15963 17.0362 8.10377 17.0052 8.06908C16.9897 8.05176 16.9786 8.03978 16.9724 8.03326L16.9671 8.02774C16.6768 7.73464 16.6776 7.2617 16.9697 6.96967Z" fill="#FFFFFF"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M19.9697 3.96967C20.2626 3.67678 20.7374 3.67678 21.0303 3.96967L20.5 4.5C21.0303 3.96967 21.0306 3.96991 21.0308 3.97017L21.0314 3.97072L21.0327 3.972L21.0359 3.97527L21.045 3.98462C21.0523 3.9921 21.0619 4.00207 21.0736 4.01451C21.0971 4.03939 21.1292 4.0742 21.1688 4.11882C21.2478 4.20802 21.3566 4.33662 21.4851 4.50365C21.7419 4.83749 22.0786 5.32653 22.4137 5.96319C23.0845 7.23773 23.75 9.10689 23.75 11.5C23.75 13.8931 23.0845 15.7623 22.4137 17.0368C22.0786 17.6735 21.7419 18.1625 21.4851 18.4963C21.3566 18.6634 21.2478 18.792 21.1688 18.8812C21.1292 18.9258 21.0971 18.9606 21.0736 18.9855C21.0619 18.9979 21.0523 19.0079 21.045 19.0154L21.0359 19.0247L21.0327 19.028L21.0314 19.0293L21.0308 19.0298C21.0306 19.0301 21.0303 19.0303 20.5 18.5L21.0303 19.0303C20.7374 19.3232 20.2626 19.3232 19.9697 19.0303C19.6771 18.7378 19.6768 18.2636 19.9687 17.9706C19.9688 17.9706 19.9689 17.9705 19.969 17.9704L19.9689 17.9705L19.9687 17.9706L19.9683 17.9711L19.9678 17.9716C19.9679 17.9714 19.9684 17.9709 19.9693 17.97L19.9825 17.9562C19.9957 17.9422 20.0173 17.9189 20.0461 17.8864C20.1038 17.8213 20.1903 17.7194 20.2962 17.5818C20.5081 17.3062 20.7964 16.889 21.0863 16.3382C21.6655 15.2377 22.25 13.6069 22.25 11.5C22.25 9.39311 21.6655 7.76227 21.0863 6.66181C20.7964 6.11097 20.5081 5.69376 20.2962 5.41822C20.1903 5.28057 20.1038 5.17869 20.0461 5.1136C20.0173 5.08107 19.9957 5.05777 19.9825 5.04384L19.9693 5.03C19.9683 5.02899 19.9678 5.02845 19.9677 5.02839L19.9683 5.02891L19.9689 5.02951L19.9692 5.02989C19.6768 4.73696 19.6769 4.26242 19.9697 3.96967ZM19.9677 5.02838C19.9677 5.02838 19.9677 5.02838 19.9677 5.02839L19.9677 5.02838Z" fill="#FFFFFF"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M12.0367 3.3964C13.2002 2.62923 14.75 3.46373 14.75 4.85741V19.1431C14.75 20.5368 13.2002 21.3713 12.0367 20.6041L6.03762 16.6487C5.99677 16.6218 5.94892 16.6074 5.9 16.6074H3C1.48122 16.6074 0.25 15.3762 0.25 13.8574V10.1431C0.25 8.62434 1.48122 7.39313 3 7.39313H5.9C5.94892 7.39313 5.99677 7.37877 6.03762 7.35184L12.0367 3.3964Z" fill="#FFFFFF"></path></svg>
             <input
               type="range"
@@ -351,23 +481,113 @@
 
       </div>
 
+
+<!-- DEBUG INFO -->
+<!-- <div class="text-xs text-red-500">
+  timestamped: {{ isTimestampedLyrics }} |
+  parsed: {{ parsedLyrics.length }} |
+  hasLyrics: {{ currentTrack?.lyrics?.length }}
+</div>
+
+TIKAI JA IR TIMESTAMPED
+<div
+  *ngIf="isTrackDataLoaded && isTimestampedLyrics"
+  class="space-y-1"
+>
+  <div
+    *ngFor="let line of parsedLyrics"
+    [ngClass]="{
+      'text-dark-2 font-semibold': currentPosition >= line.time,
+      'text-neutral-400': currentPosition < line.time
+    }"
+    class="text-[30px] leading-tight transition-all duration-200 font-sf"
+  >
+    {{ line.text || '\u00A0' }}
+  </div>
+</div> -->
+
+
+<!-- PARASTS LYRICS -->
+<!-- <pre
+  *ngIf="isTrackDataLoaded && !isTimestampedLyrics"
+  class="whitespace-pre-wrap font-sf text-dark-2 text-[36px] font-semibold leading-14 tracking-tight"
+>
+{{ currentTrack.lyrics }}
+</pre> -->
+
+
+<!-- Lyrics container -->
+<div
+  *ngIf="isTrackDataLoaded && currentTrack?.lyrics && currentTrack.lyrics_visible"
+  class="mt-6 bg-white rounded-xl px-5 py-4 backdrop-blur-sm shadow-inner transition-all duration-300 cursor-pointer select-none relative"
+  (click)="showFullLyrics = !showFullLyrics"
+>
+  <!-- Virsraksts -->
+  <div class="flex items-center gap-1 mb-3">
+    <h3 class="text-sm font-semibold text-neutral-500 tracking-wide uppercase font-sf">
+      Dziemas vārdi
+    </h3>
+    <!-- Timestamp icon -->
+    <svg *ngIf="isTimestampedLyrics" 
+         width="16" 
+         height="16" 
+         viewBox="0 0 24 24" 
+         fill="none" 
+         xmlns="http://www.w3.org/2000/svg" 
+         class="text-neutral-500"
+         stroke-width="1.5">
+      <path d="M3 12C9.26752 12 12 9.36306 12 3C12 9.36306 14.7134 12 21 12C14.7134 12 12 14.7134 12 21C12 14.7134 9.26752 12 3 12Z" 
+            fill="currentColor" 
+            stroke="currentColor" 
+            stroke-width="1.5" 
+            stroke-linejoin="round">
+      </path>
+    </svg>
+  </div>
+
+  <!-- Scroll konteineris -->
+  <div
+    #lyricsContainer
+    class="transition-all duration-500 relative overflow-y-auto pr-2"
+    [ngClass]="{
+      'max-h-[500px]': showFullLyrics,
+      'max-h-[160px]': !showFullLyrics
+    }"
+  >
+    <!-- Timestamped teksts -->
+    <div *ngIf="isTimestampedLyrics && parsedLyrics.length"
+         class="space-y-2 text-[36px] font-sf tracking-tight leading-14 select-none">
+      <div *ngFor="let line of parsedLyrics; let i = index"
+           [class]="'lyrics-line transition-colors duration-200 ' + 
+             (i === activeLyricIndex ? 'active text-dark-3 font-semibold' : 'font-semibold text-neutral-400')"
+           [style.opacity]="i === activeLyricIndex ? '1' : '0.7'">
+        {{ line.text }}
+      </div>
     </div>
 
-    <!-- Audio elements -->
-    <audio
-      *ngFor="let stem of stems"
-      #stemAudioRef
-      [attr.data-type]="stem.type"
-      [src]="stem.url"
-      preload="auto"
-    ></audio>
+    <!-- parastias teksts -->
+    <pre *ngIf="!isTimestampedLyrics"
+         class="whitespace-pre-wrap font-sf text-dark-2 text-[36px] font-semibold leading-14 tracking-tight m-0 p-0">
+      {{ currentTrack.lyrics?.trim() }}
+    </pre>
+  </div>
 
-    <audio
-      #audioRef
-      [src]="currentTrack?.audio_file"
-      preload="auto"
-      controlsList="nodownload"
-      disableRemotePlayback
-    ></audio>
+  <!-- balts gradients leja -->
+  <div
+    *ngIf="!showFullLyrics"
+    class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent pointer-events-none rounded-b-xl"
+  ></div>
+</div>
+
+
+
+
+
+
+
+
+
+    </div>
+
   </div>
 </div>

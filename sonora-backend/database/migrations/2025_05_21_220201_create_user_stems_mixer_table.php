@@ -14,17 +14,16 @@ return new class extends Migration
         Schema::create('user_stems_mixer', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Saite ar lietotāju
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // link uz lietotāju
 
-            $table->boolean('is_stems_mode')->default(false); // Vai ir ieslegts
+            $table->boolean('is_stems_mode')->default(false);
 
-            // Katras skaņas ceļa skaļums no 0.0 līdz 1.0
-            $table->float('bass_level')->default(1.0);
-            $table->float('drums_level')->default(1.0);
-            $table->float('melody_level')->default(1.0);
-            $table->float('vocals_level')->default(1.0);
+            $table->float('bass_level')->default(0.5);
+            $table->float('drums_level')->default(0.5);
+            $table->float('melody_level')->default(0.5);
+            $table->float('vocals_level')->default(0.5);
 
-            $table->timestamps(); // Izveides/laika lauki
+            $table->timestamps();
         });
     }
 

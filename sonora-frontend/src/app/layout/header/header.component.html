@@ -25,6 +25,7 @@
     <div *ngIf="menuOpen" class="absolute right-0 mt-2 w-48 bg-neutral-800 text-white rounded shadow-lg py-2 z-20">
       <button class="block w-full text-left px-4 py-2 hover:bg-neutral-700">Iestatījumi</button>
       <button (click)="logout()" class="block w-full text-left px-4 py-2 hover:bg-neutral-700">Iziet</button>
+      <p *ngIf="logoutError" class="px-4 py-2 text-sm text-red-500">{{ logoutError }}</p>
     </div>
   </div>
 </header>

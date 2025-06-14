@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('playlist_id')->constrained('playlists')->onDelete('cascade');
             $table->foreignId('track_id')->constrained('tracks')->onDelete('cascade');
-            $table->integer('position')->nullable(); // можно использовать для сортировки
+            $table->integer('position')->nullable();
             $table->timestamps();
         });
     }

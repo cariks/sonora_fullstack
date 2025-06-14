@@ -18,6 +18,15 @@ export class LoginComponent {
   constructor(private auth: AuthService) {}
 
   login() {
+    // Reset error
+    this.error = null;
+
+    // Check if fields are empty
+    if (!this.email.trim() || !this.password.trim()) {
+      this.error = 'Lūdzu aizpildi visus laukus';
+      return;
+    }
+
     this.auth.getCsrfToken().subscribe(() => {
       this.auth.login({ email: this.email, password: this.password }).subscribe({
         next: () => {

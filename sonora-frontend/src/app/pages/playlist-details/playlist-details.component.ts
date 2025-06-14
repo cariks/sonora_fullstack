@@ -70,17 +70,19 @@ export class PlaylistDetailsComponent implements OnInit, OnDestroy {
         this.iconType = res.type || '';
         this.playlistType = res.type || '';
         this.playlistCoverImage = res.cover_image || null;
-        console.log('Playlist response:', res);
-
+  
         if (res.type === 'genre' && res.gradient) {
           this.gradient = res.gradient;
         }
+  
+        this.playerService.setSource('playlist', this.playlistName);
       },
       error: (err) => {
         console.error('Error loading playlist', err);
       }
     });
   }
+  
 
 
 
@@ -118,8 +120,28 @@ export class PlaylistDetailsComponent implements OnInit, OnDestroy {
 
   playFromIndex(index: number): void {
     const sorted = this.sortedTracks;
-    this.playbackQueueService.setQueueFromTracks(sorted, index);
+  
+    const startTrack = sorted[index];
+    const playlistId = this.idOrType!;
+    if (isNaN(+playlistId)) {
+      console.warn('Nav derīgs playlist ID:', playlistId);
+      return;
+    }
+  
+    const trackIds = sorted.map(t => t.id);
+  
+    // izsaucam metodi, kas nosūtīs pieprasījumu ar source_type un source_id
+    this.playbackQueueService.updateQueueFromPlaylist(trackIds, startTrack.id, 'playlist', +playlistId, this.playlistName)
+      .subscribe({
+        next: () => {
+          this.playerService.setQueue(sorted, index);
+        },
+        error: err => {
+          console.error('Kļūda - nevar atjaunot atskaņošanas rindu', err);
+        }
+      });
   }
+  
 
   sortDirection: 'asc' | 'desc' = 'asc'; // sakotneji augosa seciba
 
@@ -135,6 +157,26 @@ export class PlaylistDetailsComponent implements OnInit, OnDestroy {
 
   playEntirePlaylistSorted() {
     const sorted = this.sortedTracks;
-    this.playbackQueueService.setQueueFromTracks(sorted, 0);
+    const playlistId = this.idOrType!;
+    if (isNaN(+playlistId)) {
+      console.warn('Nav derīgs playlist ID:', playlistId);
+      return;
+    }
+    const trackIds = sorted.map(t => t.id);
+  
+    if (!sorted.length) return;
+
+    this.playerService.setSource('playlist', this.playlistName);
+  
+    this.playbackQueueService.updateQueueFromPlaylist(trackIds, trackIds[0], 'playlist', +playlistId, this.playlistName)
+      .subscribe({
+        next: () => {
+          this.playerService.setQueue(sorted, 0);
+        },
+        error: err => {
+          console.error('Kļūda - nevar atjaunot atskaņošanas rindu', err);
+        }
+      });
   }
+  
 }

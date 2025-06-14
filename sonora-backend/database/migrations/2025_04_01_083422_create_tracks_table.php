@@ -18,8 +18,8 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('cover_image')->nullable();
             $table->boolean('is_public')->default(false);
-            $table->unsignedBigInteger('album_id')->nullable(); // without FK
-            $table->unsignedBigInteger('active_version')->nullable(); // without FK
+            $table->unsignedBigInteger('album_id')->nullable(); // bez FK
+            $table->unsignedBigInteger('active_version')->nullable(); // bez FK
             $table->date('release_date')->nullable();
             $table->unsignedBigInteger('likes_count')->default(0);
             $table->unsignedBigInteger('total_streams')->default(0);

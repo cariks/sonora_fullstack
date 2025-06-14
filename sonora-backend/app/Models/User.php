@@ -85,4 +85,14 @@ class User extends Authenticatable
     {
         return $this->hasOne(\App\Models\PlaybackStatus::class);
     }
+
+    public function equalizerPresets()
+    {
+        return $this->hasMany(EqualizerPreset::class);
+    }
+
+    public function audioSetting()
+    {
+        return $this->hasOne(UserAudioSetting::class);
+    }
 }

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('track_versions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('track_id')->constrained('tracks')->onDelete('cascade');
-            $table->string('version_name')->nullable(); // e.g. "Remaster 2015"
+            $table->string('version_name')->nullable();
             $table->string('audio_file');
             $table->string('key')->nullable(); // musical key
             $table->integer('bpm')->nullable();

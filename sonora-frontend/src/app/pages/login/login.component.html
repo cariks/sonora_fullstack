@@ -11,10 +11,15 @@
         id="email"
         [(ngModel)]="email"
         name="email"
+        maxlength="100"
+        #emailInput="ngModel"
         class="w-full h-[48px] placeholder-gray-2 bg-dark-1 pl-[18px] text-white border border-gray-4 rounded-[8px] focus:outline-none focus:ring-1 focus:ring-gray-1 transition"
         placeholder="tavs@email.com"
         required
       />
+      <p *ngIf="emailInput.invalid && emailInput.touched" class="text-red-500 text-sm">
+        E-pasts ir obligāts
+      </p>
     </div>
 
     <!-- Password -->
@@ -25,10 +30,15 @@
         id="password"
         [(ngModel)]="password"
         name="password"
+        maxlength="60"
+        #passwordInput="ngModel"
         class="w-full h-[48px] placeholder-gray-2 bg-dark-1 pl-[18px] text-white border border-gray-4 rounded-[8px] focus:outline-none focus:ring-1 focus:ring-gray-1 transition"
         placeholder="••••••••"
         required
       />
+      <p *ngIf="passwordInput.invalid && passwordInput.touched" class="text-red-500 text-sm">
+        Parole ir obligāta
+      </p>
     </div>
 
 <!--    &lt;!&ndash; Remember me &ndash;&gt;-->
@@ -56,9 +66,7 @@
       </div>
     </button>
 
-
-
     <!-- Error -->
-    <p *ngIf="error" class="text-red-400 text-sm text-center">{{ error }}</p>
+    <p *ngIf="error" class="text-red-500 text-sm text-center">{{ error }}</p>
   </form>
 </div>

@@ -85,12 +85,69 @@
   </form>
 </div>
 
+<!-- 2 SOLIS Papildus informācija -->
+<div *ngIf="step === 2" class="flex flex-col w-full h-full px-10 py-10 overflow-y-auto scrollbar-hide items-center">
+  <h2 class="text-[36px] font-medium text-center text-white">Papildus informācija</h2>
+  <p class="text-[16px] font-regular text-[#D0D0D0]">Pastāsti vairāk par sevi (neobligāti)</p>
 
+  <form [formGroup]="additionalInfoForm" class="mt-10 flex flex-col gap-6 w-full max-w-md mx-auto">
+    <!-- Pilnais vārds -->
+    <div class="flex flex-col gap-1">
+      <label for="display_name" class="text-[16px] text-white">Pilnais vārds</label>
+      <input type="text" id="display_name" formControlName="display_name"
+             class="input"
+             placeholder="Ievadi savu pilno vārdu" />
+      <p class="text-red-500 text-sm" *ngIf="additionalInfoForm.get('display_name')?.invalid && additionalInfoForm.get('display_name')?.touched">
+        Maksimālais garums - 100 simboli
+      </p>
+    </div>
 
+    <!-- Dzimšanas datums -->
+    <div class="flex flex-col gap-1">
+      <label for="date_of_birth" class="text-[16px] text-white">Dzimšanas datums</label>
+      <input type="date" id="date_of_birth" formControlName="date_of_birth"
+             [max]="maxDate"
+             class="input pr-3" />
+    </div>
 
+    <!-- Bio -->
+    <div class="flex flex-col gap-1">
+      <label for="bio" class="text-[16px] text-white">Par sevi</label>
+      <textarea id="bio" formControlName="bio"
+                class="input min-h-[120px] resize-none pt-3"
+                placeholder="Pastāsti vairāk par sevi..."></textarea>
+      <p class="text-red-500 text-sm" *ngIf="additionalInfoForm.get('bio')?.invalid && additionalInfoForm.get('bio')?.touched">
+        Maksimālais garums - 5000 simboli
+      </p>
+    </div>
 
-<!-- 2 SOLIS Attels -->
-<div *ngIf="step === 2" class="w-full h-full px-10 py-10 overflow-y-auto scrollbar-hide items-center ">
+    <!-- pogas -->
+    <div class="flex w-full gap-[8px] mt-6 justify-center items-center relative">
+      <!-- talak -->
+      <button
+        (click)="goToPhotoStep()"
+        class="btn-green"
+      >
+        Turpināt
+      </button>
+
+      <!-- Izlaist ar popup zem pogas -->
+      <div class="relative w-full flex flex-col items-center group">
+        <button (click)="goToPhotoStep()" class="btn-skip relative z-10">
+          Izlaist
+        </button>
+
+        <!-- popop -->
+        <div class="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-[240px] bg-gray-4/80 text-sm text-white font-medium text-center px-4 py-3 rounded-lg opacity-0 group-hover:opacity-100 transition pointer-events-none z-0">
+          Vari turpināt arī bez papildus informācijas - to varēsi pievienot vēlāk
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- 3 SOLIS Attels -->
+<div *ngIf="step === 3" class="w-full h-full px-10 py-10 overflow-y-auto scrollbar-hide items-center ">
   <div class="mt-10 flex flex-col w-full max-w-md mx-auto items-center">
     <h2 class="text-[36px] font-medium text-center text-white">Pievieno savu profila attēlu</h2>
     <p class="text-[16px] font-regular text-[#D0D0D0]">Tavs attēls būs redzams citiem lietotājiem Sonora</p>
@@ -156,8 +213,8 @@
 
 
 
-<!-- 3 SOLIS Žanri -->
-<div *ngIf="step === 3" class="w-full h-full py-10 overflow-y-auto scrollbar-hide items-center ">
+<!-- 4 SOLIS Žanri -->
+<div *ngIf="step === 4" class="w-full h-full py-10 overflow-y-auto scrollbar-hide items-center ">
   <div class=" flex flex-col w-full max-w-md mx-auto items-center">
     <h2 class="text-[36px] font-medium text-center text-white leading-none mb-1">Izvēlies savus mīļākos žanrus</h2>
     <p class="text-[16px] font-regular text-[#D0D0D0]">Palīdzi Sonora saprast tavu gaumi un piedāvāt tev atbilstošu mūziku</p>
@@ -213,8 +270,8 @@
 </div>
 
 
-<!-- 4 SOLIS: Artisti -->
-<div *ngIf="step === 4" class="w-full h-full py-10 overflow-y-auto items-center px-10">
+<!-- 5 SOLIS: Artisti -->
+<div *ngIf="step === 5" class="w-full h-full py-10 overflow-y-auto items-center px-10">
   <div class="flex flex-col w-full max-w-md mx-auto items-center">
     <h2 class="text-[36px] font-medium text-center text-white leading-none mb-1">Izvēlies savus mīļākos artistus</h2>
     <p class="text-[16px] text-[#D0D0D0]">Balstoties uz tavām izvēlēm, mēs pielāgosim ieteikumus tev</p>
@@ -289,8 +346,8 @@
 </div>
 
 
-<!-- 5 SOLIS -->
-<div *ngIf="step === 5" class="w-full h-full px-10 py-[100px] flex flex-col items-center  text-center">
+<!-- 6 SOLIS -->
+<div *ngIf="step === 6" class="w-full h-full px-10 py-[100px] flex flex-col items-center  text-center">
   <h2 class="text-[36px] font-medium text-white mb-1">Profils veiksmīgi izveidots!</h2>
   <p class="text-[16px] text-[#D0D0D0] mb-[100px]">Tagad vari uzreiz pieslēgties savam jaunam kontam!</p>
 

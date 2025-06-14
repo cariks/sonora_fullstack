@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('track_id')->constrained()->onDelete('cascade');
             $table->integer('position');
+            $table->boolean('is_current')->default(false);
             $table->timestamps();
         });
     }

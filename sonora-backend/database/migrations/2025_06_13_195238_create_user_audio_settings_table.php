@@ -11,15 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('version_stems', function (Blueprint $table) {
+        Schema::create('user_audio_settings', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('version_id')->constrained('track_versions')->onDelete('cascade'); // link uz versiju
-
-            $table->enum('stem_type', ['vocals', 'bass', 'drums', 'melody']);
-            $table->string('audio_file');
-
-            $table->timestamps(); 
+            $table->timestamps();
         });
     }
 
@@ -28,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('version_stems');
+        Schema::dropIfExists('user_audio_settings');
     }
 };

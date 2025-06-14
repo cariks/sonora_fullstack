@@ -31,6 +31,7 @@
     "@angular-devkit/build-angular": "^17.3.17",
     "@angular/cli": "^17.3.17",
     "@angular/compiler-cli": "^17.3.12",
+    "@tailwindcss/container-queries": "^0.1.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/jasmine": "~4.3.0",
     "autoprefixer": "^10.4.21",

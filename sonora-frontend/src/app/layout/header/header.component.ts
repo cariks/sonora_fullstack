@@ -9,6 +9,7 @@ import { AuthService } from '../../services/auth.service';
 export class HeaderComponent implements OnInit {
   menuOpen = false;
   loggedInUser: any;
+  logoutError: string | null = null;
 
   constructor(private auth: AuthService) {}
 
@@ -18,13 +19,21 @@ export class HeaderComponent implements OnInit {
     });
   }
 
-
-
   toggleMenu() {
     this.menuOpen = !this.menuOpen;
+    // Reset error when menu is toggled
+    this.logoutError = null;
   }
 
   logout() {
-    this.auth.logout().subscribe(() => window.location.href = '/auth-page');
+    this.logoutError = null;
+    this.auth.logout().subscribe({
+      next: () => {
+        window.location.href = '/auth-page';
+      },
+      error: () => {
+        this.logoutError = 'Neizdevās iziet no konta. Lūdzu mēģini vēlreiz.';
+      }
+    });
   }
 }

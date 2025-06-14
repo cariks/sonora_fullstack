@@ -14,6 +14,7 @@ use App\Models\Photo;
 use App\Http\Controllers\TrackLikeController;
 use App\Http\Controllers\PlaylistController;
 use App\Http\Controllers\PlaylistTrackController;
+use App\Http\Controllers\EqualizerController;
 
 
 /*
@@ -77,6 +78,8 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::get('/playlists/{identifier}/tracks', [PlaylistController::class, 'getTracksByPlaylist']);
+Route::get('/tracks/{id}', [TrackController::class, 'show']);
+
 
 Route::middleware('auth:sanctum')->post('/playlists/create', [PlaylistController::class, 'store']);
 // pievienot dziesmu plejlistam
@@ -110,6 +113,16 @@ Route::middleware('auth:sanctum')->get('/playlists/{identifier}', [PlaylistContr
 Route::get('/artist/{artistId}/genres', [ArtistGenreController::class, 'getGenres']);
 
 
+// Preseti, ekvalaizera iestatijumu utt
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/equalizer/presets', [EqualizerController::class, 'getPresets']);
+    Route::post('/equalizer/presets', [EqualizerController::class, 'createPreset']);
+    Route::put('/equalizer/presets/{id}', [EqualizerController::class, 'updatePreset']);
+    Route::delete('/equalizer/presets/{id}', [EqualizerController::class, 'deletePreset']);
+
+    Route::get('/equalizer/settings', [EqualizerController::class, 'getSettings']);
+    Route::put('/equalizer/settings', [EqualizerController::class, 'updateSettings']);
+});
 
 // Tikai autorizētiem lietotājiem
 Route::middleware('auth:sanctum')->group(function () {

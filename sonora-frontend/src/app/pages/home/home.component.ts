@@ -25,8 +25,10 @@ export class HomeComponent implements OnInit {
 
   ngOnInit() {
     this.trackService.getAllTracks().subscribe({
-      next: (data) => this.tracks = data,
-      error: (err) => console.error('Failed to load tracks', err)
+      next: (response: { data: any[] }) => {
+        this.tracks = Array.isArray(response.data) ? response.data : [];
+      },
+      error: (err: any) => console.error('Failed to load tracks', err)
     });
 
     this.trackService.getLikedPlaylist().subscribe({
@@ -34,7 +36,7 @@ export class HomeComponent implements OnInit {
       error: (err) => console.error('Failed to load liked playlist', err)
     });
 
-    // Ieladet playlistus
+    // ieladejam playlistus
     this.playlistService.getUserPlaylists().subscribe({
       next: (data) => {
         this.playlists = data.map(p => {
@@ -58,18 +60,13 @@ export class HomeComponent implements OnInit {
   }
 
   togglePlay(track: any) {
-    if (this.playerService.getCurrentTrack()?.id === track.id) {
-      // if the same song then pause
-      this.playerService.togglePlayback();
-    } else {
-      // if new song start playing
-      this.playerService.setTrack(track, true);
-    }
+    // Always use setTrack - it will handle both new track and toggle for current track
+    this.playerService.setTrack(track, true);
   }
 
   isPlaying(track: any): boolean {
-    return this.playerService.getCurrentTrack()?.id === track.id && this.playerService.getIsPlaying();
-
+    const currentTrack = this.playerService.getCurrentTrack();
+    return currentTrack?.id === track.id && this.playerService.getIsPlaying();
   }
 
 }

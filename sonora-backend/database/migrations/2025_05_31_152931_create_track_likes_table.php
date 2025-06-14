@@ -18,7 +18,7 @@ return new class extends Migration
             $table->enum('like_status', ['like', 'dislike']);
             $table->timestamps();
 
-            $table->unique(['user_id', 'track_id']); // Чтобы нельзя было поставить 2 лайка/дизлайка
+            $table->unique(['user_id', 'track_id']);
         });
     }
 
