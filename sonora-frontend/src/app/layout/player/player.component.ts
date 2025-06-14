@@ -1,6 +1,6 @@
 // importē nepieciešamos angular elementus un servisus
 import {
-  Component, ElementRef, EventEmitter, HostListener, Output, ViewChild, ViewChildren, QueryList, ChangeDetectorRef
+  Component, ElementRef, EventEmitter, HostListener, Output, ViewChild, ViewChildren, QueryList, ChangeDetectorRef, Input, OnDestroy, OnInit
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -10,6 +10,7 @@ import { TrackLikesService } from '../../services/track-likes.service';
 import { AuthService } from '../../services/auth.service';
 import { PlaylistUpdateService } from '../../services/playlist-update.service';
 import { debounceTime } from 'rxjs/operators';
+import { EqualizerService, UserAudioSettings, EqualizerPreset } from '../../services/equalizer.service';
 
 // komponents, kas atbild par mūzikas atskaņošanu un playera interfeisu
 @Component({
@@ -17,7 +18,7 @@ import { debounceTime } from 'rxjs/operators';
   templateUrl: './player.component.html',
   styleUrls: ['./player.component.scss']
 })
-export class PlayerComponent {
+export class PlayerComponent implements OnInit, OnDestroy {
   // bāzes url priekš audio failiem
   private readonly BASE_URL = '/storage/';
   // ielādes bloķēšanas flag - novērš vairākas vienlaicīgas dziesmu ielādes
@@ -27,20 +28,133 @@ export class PlayerComponent {
   isPlayButtonDisabled = true;
   isNavigationDisabled = true;
 
-  selectedEffectTab: 'stems' | 'eq' | 'stereo' = 'stems';
-
   showFullLyrics = false;
-
-
-  eqEnabled = false;
-  eqSettings = [0, 0, 0, 0, 0, 0];
-  eqFrequencies = [60, 150, 400, 1000, 2400, 15000];
-  private eqFilters: BiquadFilterNode[] = [];
-
-
   parsedLyrics: { time: number, text: string }[] = [];
   isTimestampedLyrics = false;
   activeLyricIndex = -1;
+
+
+  // EFEKTI, PRESETI UTT
+  selectedEffectTab: 'stems' | 'eq' | 'stereo' = 'eq';
+
+  private readonly EFFECTS_TAB_KEY = 'sonora_selected_effects_tab';
+
+  eqEnabled = false;
+  eqSettings: number[] = [0, 0, 0, 0, 0, 0];
+  eqFrequencies = [60, 150, 400, 1000, 2400, 15000];
+  private eqUpdateTimer: any = null;
+  private eqFilters: BiquadFilterNode[] = [];
+  private masterGainNode!: GainNode;
+  private stereoGainNode!: GainNode;
+  private stereoMerger!: ChannelMergerNode;
+  private stereoChannelSplitter!: ChannelSplitterNode;
+  private eqGainNode!: GainNode;
+  private compressor!: DynamicsCompressorNode;
+
+  showPresetModal = false;
+  newPresetName = '';
+  newPresetIcon: string | null = null;
+  availableIcons = ['airpods3', 'airpodspro', 'airpods', 'airpodsmax', 'car', 'speaker'];
+  userPresets: EqualizerPreset[] = [];
+  selectedPresetId: number | null = null;
+  selectedPresetIcon: string | null = null;
+  isPresetModified = true;
+
+  showPresetDropdown = false;
+  presetDropdownTop = 0;
+  presetDropdownLeft = 0;
+
+  stereoEnabled = false;
+  stereoLevel = 1.0;
+
+  private stereoUpdateTimer: any = null;
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+
+    // Jja tika noklikšķināts uz iepriekš iestatīto iestatījumu pogas vai uznirstošā loga iekšpuse tad to neaizveram
+    if (target.closest('.preset-selector') || target.closest('.preset-dropdown')) {
+      console.log('Click inside preset elements, keeping dropdown open');
+      return;
+    }
+
+    if (this.showPresetDropdown) {
+      console.log('Click outside preset elements, closing dropdown');
+      this.showPresetDropdown = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  togglePresetDropdown(event: MouseEvent) {
+    console.log('Toggling preset dropdown, current state:', this.showPresetDropdown);
+    console.log('Conditions:', {
+      showEffects: this.showEffects,
+      selectedEffectTab: this.selectedEffectTab,
+      showPresetDropdown: this.showPresetDropdown
+    });
+
+    const button = event.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+    
+    // pozicija zem pogas
+    this.presetDropdownTop = rect.bottom + 4; // 4px gap
+    this.presetDropdownLeft = rect.left;
+
+    this.showPresetDropdown = !this.showPresetDropdown;
+    console.log('New state:', this.showPresetDropdown);
+    
+    this.cdr.detectChanges();
+  }
+
+  selectPreset(presetId: number | null) {
+    console.log('[EQ] Selecting preset:', presetId);
+    
+    // meklejam presetu
+    const preset = this.userPresets.find(p => p.eq_preset_id === presetId);
+    if (!preset && presetId !== null) {
+      console.warn('[EQ] Preset not found:', presetId);
+      return;
+    }
+
+    // athaunojam preset selection
+    this.selectedPresetId = presetId;
+    this.selectedPresetIcon = preset?.icon ?? null;
+    this.isPresetModified = false;
+
+    // Ja ir iepriekš iestatīts presets, piemēro tā iestatījumus
+    if (preset) {
+      const settings = typeof preset.eq_setting === 'string' 
+        ? JSON.parse(preset.eq_setting)
+        : preset.eq_setting;
+
+      // atjaunojam
+      this.eqSettings = [...settings];
+      
+      // atjaunojam filtrus ja ir
+      this.eqFilters.forEach((filter, index) => {
+        if (filter) {
+          filter.gain.value = this.eqSettings[index];
+        }
+      });
+
+      if (!this.eqEnabled) {
+        this.eqEnabled = true;
+      }
+
+      // atjaunojam kas ir DB
+      this.updateUserSettings({
+        eq_enabled: true,
+        eq_settings: this.eqSettings,
+        selected_preset_id: presetId
+      });
+
+      // atjaunojam chain
+      requestAnimationFrame(() => {
+        this.rebuildAudioChain();
+      });
+    }
+  }
 
   // audioRef ir galvenais audio elements
   // stemAudioElements ir kolekcija no visiem stem audio elementiem
@@ -93,11 +207,12 @@ export class PlayerComponent {
   private startTime: number = 0;
   private pausedTime: number = 0;
 
+
   private isInitialLoad = true;
   isFirstLoad = true;
 
   // efektu un modālo logu stāvokļa mainīgie
-  showEffects = false;
+  showEffects = true;
   showModal = false;
   selectedTrackId = 0;
 
@@ -267,19 +382,152 @@ export class PlayerComponent {
     private trackLikesService: TrackLikesService,
     private authService: AuthService,
     private playlistUpdateService: PlaylistUpdateService,
+    private equalizerService: EqualizerService,
   ) {
     // ielādē saglabāto skaļumu no localStorage
     const savedVolume = localStorage.getItem('playerVolume');
     if (savedVolume) {
       this.volume = parseFloat(savedVolume);
     }
+    this.loadSelectedEffectsTab();
+  }
+
+  private loadSelectedEffectsTab() {
+    const savedTab = localStorage.getItem(this.EFFECTS_TAB_KEY);
+    if (savedTab && ['stems', 'eq', 'stereo'].includes(savedTab)) {
+      this.selectedEffectTab = savedTab as 'stems' | 'eq' | 'stereo';
+    }
+  }
+
+  private saveSelectedEffectsTab(tab: 'stems' | 'eq' | 'stereo') {
+    localStorage.setItem(this.EFFECTS_TAB_KEY, tab);
+  }
+
+  setEffectsTab(tab: 'stems' | 'eq' | 'stereo') {
+    this.selectedEffectTab = tab;
+    this.saveSelectedEffectsTab(tab);
   }
 
   // inicializācija, angular dzīves cikls / subscriptions
   // šī funkcija tiek izsaukta pēc komponenta izveides
   ngOnInit() {
-    // izveido jaunu audio kontekstu
+    // audio konteksta un mezglu izveide
     this.audioCtx = new AudioContext();
+    this.masterGainNode = this.audioCtx.createGain();
+    this.stereoChannelSplitter = this.audioCtx.createChannelSplitter(2);
+    this.stereoMerger = this.audioCtx.createChannelMerger(2);
+    this.stereoGainNode = this.audioCtx.createGain();
+    this.eqGainNode = this.audioCtx.createGain();
+
+    // compressors
+    this.compressor = this.audioCtx.createDynamicsCompressor();
+    this.compressor.threshold.value = -6;
+    this.compressor.knee.value = 20;
+    this.compressor.ratio.value = 12;
+    this.compressor.attack.value = 0.003;
+    this.compressor.release.value = 0.25;
+
+    // izveidojam audio chain
+    this.rebuildAudioChain();
+
+    // ielade lietotaja EQ iestatijumus
+    this.equalizerService.getUserSettings().subscribe({
+      next: (settings: UserAudioSettings) => {
+        console.log('[EQ] Loaded user settings:', settings);
+        
+        // ja nav iestatijumu, izveidojam jaunus ar noklusetajam vertibam
+        if (!settings.eq_settings || (typeof settings.eq_settings === 'string' && settings.eq_settings === '[]')) {
+          settings = {
+            eq_enabled: false,
+            eq_settings: [0, 0, 0, 0, 0, 0],
+            selected_preset_id: null,
+            stereo_expansion_enabled: false,
+            stereo_expansion_level: 0.5
+          };
+          // saglabajam noklusetos iestatijumus DB
+          this.updateUserSettings(settings);
+        }
+
+        this.eqEnabled = settings.eq_enabled ?? false;
+        this.eqSettings = Array.isArray(settings.eq_settings) 
+          ? settings.eq_settings 
+          : JSON.parse(settings.eq_settings as string);
+
+        // stereo paplašinātāja iestatījumu ielāde
+        this.stereoEnabled = settings.stereo_expansion_enabled ?? false;
+        this.stereoLevel = settings.stereo_expansion_level ?? 0.5;
+
+        // piemerojam efektus
+        if (this.eqEnabled) {
+          this.applyEq();
+        }
+        this.applyStereoExpansion();
+
+        // ielade presetus un pielieto izveleto
+        this.equalizerService.getPresets().subscribe({
+          next: (presets: EqualizerPreset[]) => {
+            console.log('[EQ] Loaded presets:', presets);
+            this.userPresets = presets ?? [];
+            
+            // ja ir izvelets presets pielietojam to
+            if (settings.selected_preset_id) {
+              console.log('[EQ] Loading selected preset:', settings.selected_preset_id);
+              this.selectedPresetId = settings.selected_preset_id;
+              
+              const selectedPreset = this.userPresets.find(
+                preset => preset.eq_preset_id === settings.selected_preset_id
+              );
+              
+              if (selectedPreset) {
+                console.log('[EQ] Found selected preset:', selectedPreset);
+                this.selectedPresetIcon = selectedPreset.icon;
+                
+                // pielietojam preseta iestatijumus
+                let presetSettings = selectedPreset.eq_setting;
+                if (typeof presetSettings === 'string') {
+                  try {
+                    presetSettings = JSON.parse(presetSettings);
+                  } catch (e) {
+                    console.error('[EQ] Neizdevās parsēt eq_setting:', e);
+                    presetSettings = [0, 0, 0, 0, 0, 0];
+                  }
+                }
+                
+                this.eqSettings = [...presetSettings];
+                
+                // pielietojam EQ ja tas ir ieslegts
+                if (this.eqEnabled) {
+                  this.applyEq();
+                }
+              } else {
+                console.warn('[EQ] Selected preset not found:', settings.selected_preset_id);
+                this.selectedPresetId = null;
+                this.selectedPresetIcon = null;
+              }
+            }
+            
+            this.cdr.detectChanges();
+          },
+          error: (err: Error) => {
+            console.error('[EQ] Neizdevās ielādēt presetus:', err);
+          }
+        });
+
+        if (this.eqEnabled) {
+          this.applyEq();
+        } else {
+          this.disconnectEqFilters();
+        }
+
+        this.cdr.detectChanges();
+      },
+      error: (err: Error) => {
+        console.error('[EQ] Neizdevas ieladet EQ iestatijumus no DB:', err);
+        // ja neizdevas ieladet, izmantojam noklusetos iestatijumus
+        this.eqEnabled = false;
+        this.eqSettings = [0, 0, 0, 0, 0, 0];
+      }
+    });
 
     // abonējamies uz like statusa izmaiņām
     this.likeStatusSub = this.playlistUpdateService.likeStatusChanged$.subscribe(() => {
@@ -386,12 +634,12 @@ export class PlayerComponent {
     
     if (!activeLine) return;
 
-    // Konteinera un aktīvās rindas pozīciju iegūšana
+    // konteinera un aktīvās rindas pozīciju iegūšana
     const containerRect = container.getBoundingClientRect();
     const lineRect = activeLine.getBoundingClientRect();
 
-    // Aprēķināt ritināšanas pozīciju
-    // Novietojiam aktīvo rindu konteinera augšpusē ar nelielu atkāpi
+    // aprēķināt ritināšanas pozīciju
+    // novietojiam aktīvo rindu konteinera augšpusē ar nelielu atkāpi
     const scrollTop = lineRect.top - containerRect.top - 1 + container.scrollTop;
 
     // Smooth ritināšana uz pozīciju
@@ -413,7 +661,7 @@ export class PlayerComponent {
         console.log('Playback status received:', status);
         const { track_id, current_time, is_playing, source_type, source_name, source_id } = status;
         
-        // Ja statusā nav dziesmas atstājam isFirstLoad = true
+        // ja statusā nav dziesmas atstājam isFirstLoad = true
         if (!track_id) {
           this.currentTrack = null;
           this.isTrackDataLoaded = true;
@@ -467,6 +715,10 @@ export class PlayerComponent {
   ngOnDestroy() {
     this.likeStatusSub?.unsubscribe();
     this.likedUpdateSub?.unsubscribe();
+    // Notiram timer
+    if (this.eqUpdateTimer) {
+      clearTimeout(this.eqUpdateTimer);
+    }
   }
 
   // dziesmas ielāde un iestatīšana
@@ -519,7 +771,7 @@ export class PlayerComponent {
         console.log('Extracted stems:', track.stems);
       }
 
-      // Nosaka ilgumu un tipu
+      // nosaka ilgumu un tipu
       this.getAudioDuration(track.audio_file).then(duration => {
         track.duration = duration;
         console.log('Precīzais ilgums:', duration);
@@ -779,7 +1031,7 @@ export class PlayerComponent {
 
       const gain = this.audioCtx.createGain();
       source.connect(gain);
-      gain.connect(this.audioCtx.destination);
+      gain.connect(this.masterGainNode);
 
       this.sourceNodes.set(type, source);
       this.gainNodes.set(type, gain);
@@ -1145,7 +1397,7 @@ export class PlayerComponent {
   
 
 
-  // Nosaka audio ilgumu, izmantojot <audio> elementu
+  // nosaka audio ilgumu, izmantojot <audio> elementu
   getAudioDuration(url: string): Promise<number> {
     return new Promise((resolve, reject) => {
       const audio = new Audio();
@@ -1162,7 +1414,7 @@ export class PlayerComponent {
     });
   }
 
-  // Nosaka audio MIME tipu, izmantojot HEAD pieprasījumu
+  // nosaka audio MIME tipu, izmantojot HEAD pieprasījumu
   async getAudioMimeType(url: string): Promise<string | null> {
     const fullUrl = url.startsWith('http') ? url : `${this.BASE_URL}${url}`;
 
@@ -1215,10 +1467,10 @@ export class PlayerComponent {
   
       for (const line of lines.slice(1)) {
         const trimmedLine = line.trim();
-        if (!trimmedLine) continue; // Izlaist tuksas rindas
+        if (!trimmedLine) continue; // izlaist tuksas rindas
         
         console.log('Processing line:', trimmedLine);
-        // Atjauninata regulara izteiksme precizai laika zimu parsanai
+        // atjauninata regulara izteiksme precizai laika zimu parsanai
         const match = trimmedLine.match(/^\[(\d{1,2}):(\d{2}\.\d{2})\](.*)$/);
         
         if (match) {
@@ -1227,15 +1479,7 @@ export class PlayerComponent {
           const time = minutes * 60 + seconds;
           const text = match[3].trim();
           
-          console.log('Matched line:', {
-            minutes,
-            seconds,
-            time,
-            text,
-            match: match[0]
-          });
-          
-          // Pievienot rindu tikai ja taa nav tuksa
+          // pievienot rindu tikai ja taa nav tuksa
           if (text) {
             this.parsedLyrics.push({ time, text });
           }
@@ -1244,7 +1488,7 @@ export class PlayerComponent {
         }
       }
 
-      // Sakartot rindas pec laika uzticamibai
+      // sakartot rindas pec laika uzticamibai
       this.parsedLyrics.sort((a, b) => a.time - b.time);
       
       console.log('Final parsed lyrics:', {
@@ -1260,109 +1504,436 @@ export class PlayerComponent {
 
 
   
-  // Ekvalaizera logika
+  // ekvalaizera logika
   onEqToggle() {
+    // prevent any potential race conditions
+    if (this.isToggleBlocked) {
+      console.log('[EQ] Toggle blocked, ignoring');
+      return;
+    }
+
+    this.isToggleBlocked = true;
+
+    // toggle status
     this.eqEnabled = !this.eqEnabled;
-    console.log('[EQ] Toggle:', this.eqEnabled);
-    if (this.eqEnabled) {
-      this.applyEq();
-    } else {
+    console.log('[EQ] Toggle changed to:', this.eqEnabled);
+
+    // atjaonojam DB
+    this.updateUserSettings({
+      eq_enabled: this.eqEnabled,
+      eq_settings: this.eqSettings,
+      selected_preset_id: this.selectedPresetId
+    });
+
+    requestAnimationFrame(() => {
+      this.rebuildAudioChain();
+      setTimeout(() => {
+        this.isToggleBlocked = false;
+      }, 100);
+    });
+  }
+  
+  
+  
+  applyEq() {
+    if (!this.audioCtx) return;
+
+    try {
+      // nonemt EQ connection
       this.disconnectEqFilters();
+      this.eqGainNode.disconnect();
+
+      if (this.eqEnabled) {
+        // izveido EQ filtrus ja tādu nav
+        if (this.eqFilters.length === 0) {
+          this.eqFilters = this.eqFrequencies.map(freq => {
+            const filter = this.audioCtx.createBiquadFilter();
+            filter.type = 'peaking';
+            filter.frequency.value = freq;
+            filter.Q.value = 1;
+            return filter;
+          });
+        }
+
+        // savienot EQ chain
+        const source = this.stereoEnabled ? this.stereoMerger : this.masterGainNode;
+        source.disconnect();
+        source.connect(this.eqGainNode);
+
+        // savieno filtrus
+        let previousNode: AudioNode = this.eqGainNode;
+        this.eqFilters.forEach((filter, index) => {
+          filter.gain.value = this.eqSettings[index];
+          previousNode.connect(filter);
+          previousNode = filter;
+        });
+
+        previousNode.connect(this.compressor);
+      } else {
+        const source = this.stereoEnabled ? this.stereoMerger : this.masterGainNode;
+        source.disconnect();
+        source.connect(this.compressor);
+      }
+    } catch (e) {
+      console.warn('EQ pielietošanas kļūda:', e);
     }
   }
   
-  applyEq() {
-    if (!this.currentTrack || !this.audioCtx) {
-      this.disconnectEqFilters();
-      return;
-    }
-
-    this.disconnectEqFilters();
-
-    if (!this.eqEnabled) return;
-
-    console.log('[EQ] Applying EQ settings:', this.eqSettings);
-
-    this.eqFilters = this.eqFrequencies.map((freq, index) => {
-      const filter = this.audioCtx.createBiquadFilter();
-      filter.type = 'peaking';
-      filter.frequency.value = freq;
-      filter.Q.value = 1.0;
-      filter.gain.value = this.eqSettings[index];
-      console.log(`[EQ] Created filter – freq: ${freq}Hz, gain: ${filter.gain.value}`);
-      return filter;
-    });
-
-    const buffer = this.audioBuffers.get('main');
-    const gain = this.gainNodes.get('main');
-
-    if (!buffer || !gain) {
-      console.warn('[EQ] No buffer or gain node found for main track');
-      return;
-    }
-
-    // Izveidot jaunu avotu
-    const newSource = this.audioCtx.createBufferSource();
-    newSource.buffer = buffer;
-
-    // Pievienot ekvalaizera filtrus
-    let lastNode: AudioNode = newSource;
-    this.eqFilters.forEach(filter => {
-      lastNode.connect(filter);
-      lastNode = filter;
-    });
-    lastNode.connect(gain);
-
-    // Sakt atskaņot no pašreizējās pozīcijas
-    try {
-      newSource.start(0, this.currentPosition);
-      console.log('[EQ] Started new source with filters at position:', this.currentPosition);
-      this.sourceNodes.set('main', newSource);
-    } catch (err) {
-      console.error('[EQ] Failed to start new source:', err);
-    }
-  }
+  
 
   
 
   onEqSliderChange(index: number, event: Event) {
     const input = event.target as HTMLInputElement;
-    const value = parseFloat(input.value);
-    console.log(`[EQ] Slider changed – index: ${index}, value: ${value}`);
-    this.eqSettings[index] = value;
-    this.applyEq();
+    const newValue = +input.value;
+    
+    // atjauno settingu
+    this.eqSettings[index] = newValue;
+
+    // atjauno filtru
+    if (this.eqFilters[index]) {
+      this.eqFilters[index].gain.value = newValue;
+    }
+
+    // parabude vai zimantojam presetu
+    if (this.selectedPresetId) {
+      const activePreset = this.userPresets.find(p => p.eq_preset_id === this.selectedPresetId);
+      if (activePreset) {
+        const presetSettings = typeof activePreset.eq_setting === 'string'
+          ? JSON.parse(activePreset.eq_setting)
+          : activePreset.eq_setting;
+        
+        this.isPresetModified = JSON.stringify(presetSettings) !== JSON.stringify(this.eqSettings);
+      }
+    }
+
+    // atjano DB
+    if (this.eqUpdateTimer) {
+      clearTimeout(this.eqUpdateTimer);
+    }
+    this.eqUpdateTimer = setTimeout(() => {
+      this.updateUserSettings({
+        eq_settings: this.eqSettings,
+        selected_preset_id: this.isPresetModified ? null : this.selectedPresetId
+      });
+      this.eqUpdateTimer = null;
+    }, 500);
   }
+  
 
   resetEq() {
     this.eqSettings = [0, 0, 0, 0, 0, 0];
+    
+    // pārbauda vai atiestatīšanas stāvoklis atšķiras no pašreizējā iepriekš iestatītā
+    if (this.selectedPresetId) {
+      const activePreset = this.userPresets.find(p => p.eq_preset_id === this.selectedPresetId);
+      if (activePreset) {
+        const presetSettings = typeof activePreset.eq_setting === 'string' 
+          ? JSON.parse(activePreset.eq_setting) 
+          : activePreset.eq_setting;
+        this.isPresetModified = JSON.stringify(presetSettings) !== JSON.stringify(this.eqSettings);
+      }
+    } else {
+      this.isPresetModified = false;
+    }
+    
+    // vispirms pielietojam izmainas
     this.applyEq();
+
+    // tad saglabajam DB
+    this.updateUserSettings({
+      eq_enabled: this.eqEnabled,
+      eq_settings: this.eqSettings,
+      selected_preset_id: this.selectedPresetId,
+      stereo_expansion_enabled: false,
+      stereo_expansion_level: 1.0
+    });
   }
 
   disconnectEqFilters() {
-    // Visu filtru izslēgšana
+    if (!this.audioCtx || !this.masterGainNode) return;
+
+    console.log('[EQ] Atvienojam filtrus');
+    
+    // atvienojam visus filtrus
     this.eqFilters.forEach(filter => {
       try {
         filter.disconnect();
-      } catch (_) {}
+      } catch (e) {
+        console.warn('[EQ] Neizdevas atvienot filtru:', e);
+      }
     });
+    
+    // notiram filtrus masivu
     this.eqFilters = [];
-
-    // Atjaunot tiešā savienojuma avotu -> ieguvums
-    const source = this.sourceNodes.get('main');
-    const gain = this.gainNodes.get('main');
-
-    if (source && gain) {
-      try {
-        source.disconnect();
-        source.connect(gain);
-      } catch (_) {}
+    
+    // pievienojam master gain node pie kompresora
+    try {
+      this.masterGainNode.disconnect();
+      this.masterGainNode.connect(this.compressor);
+    } catch (e) {
+      console.warn('[EQ] Neizdevas atvienot master gain:', e);
     }
   }
   
-
+  openCreatePresetModal() {
+    this.newPresetName = '';
+    this.newPresetIcon = null;
+    this.showPresetModal = true;
+  }
   
+  closePresetModal() {
+    this.showPresetModal = false;
+  }
   
+  selectPresetIcon(icon: string) {
+    this.newPresetIcon = icon;
+  }
+  
+  savePreset() {
+    if (!this.newPresetName || !this.newPresetIcon) return;
+  
+    const preset = {
+      name: this.newPresetName,
+      icon: this.newPresetIcon,
+      eq_setting: this.eqSettings
+    };
+  
+    this.equalizerService.createPreset(preset).subscribe({
+      next: (created) => {
+        console.log('[EQ] Presets saved:', created);
+        this.closePresetModal();
+        
+        // preset saraksta atjauninasana
+        this.equalizerService.getPresets().subscribe({
+          next: (presets: EqualizerPreset[]) => {
+            console.log('[EQ] Reloaded presets after creation:', presets);
+            this.userPresets = presets ?? [];
+            
+            // meklejam tikai izveidoto presetu
+            const newPreset = this.userPresets.find(p => 
+              p.name === this.newPresetName && 
+              p.icon === this.newPresetIcon
+            );
+            
+            if (newPreset) {
+              // iestatm jauno presetu ka aktivo
+              this.selectedPresetId = newPreset.eq_preset_id;
+              this.selectedPresetIcon = newPreset.icon;
+              this.isPresetModified = false;
+              
+              this.updateUserSettings({
+                selected_preset_id: newPreset.eq_preset_id,
+                eq_settings: this.eqSettings
+              });
+            }
+            
+            this.cdr.detectChanges();
+          },
+          error: (err) => {
+            console.error('[EQ] Failed to reload presets:', err);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('[EQ] Failed to save preset:', err);
+      }
+    });
+  }
+  
+  onPresetChange() {
+    console.log('[EQ] Selected preset ID:', this.selectedPresetId);
+    console.log('[EQ] Available presets:', this.userPresets);
+    
+    if (!this.selectedPresetId) {
+      this.selectedPresetIcon = null;
+      this.isPresetModified = false;
 
+      this.updateUserSettings({
+        selected_preset_id: null,
+        eq_settings: this.eqSettings
+      });
+      return;
+    }
+
+    const selectedPreset = this.userPresets.find(
+      preset => preset.eq_preset_id === Number(this.selectedPresetId)
+    );
+
+
+    if (!selectedPreset) {
+      console.error('[EQ] Presets nav atrasts:', this.selectedPresetId, 'Available presets:', this.userPresets);
+      this.selectedPresetId = null;
+      this.selectedPresetIcon = null;
+      return;
+    }
+
+    // ja nepieciešams pārveidojam virkni par masīvu
+    let presetSettings = selectedPreset.eq_setting;
+    if (typeof presetSettings === 'string') {
+      try {
+        presetSettings = JSON.parse(presetSettings);
+      } catch (e) {
+        console.error('[EQ] Neizdevās parsēt eq_setting:', e);
+        presetSettings = [0, 0, 0, 0, 0, 0]; // fallback
+      }
+    }
+
+    this.eqSettings = [...presetSettings];
+    this.selectedPresetIcon = selectedPreset.icon;
+    this.isPresetModified = false;
+
+    this.updateUserSettings({
+      selected_preset_id: selectedPreset.eq_preset_id,
+      eq_settings: presetSettings
+    });
+
+    if (this.eqEnabled) {
+      this.applyEq();
+    }
+  }
+
+  updateCurrentPreset() {
+    if (!this.selectedPresetId) return;
+  
+    this.equalizerService.updatePreset(this.selectedPresetId, {
+      eq_setting: this.eqSettings
+    }).subscribe({
+      next: () => {
+        const preset = this.userPresets.find(p => p.eq_preset_id === this.selectedPresetId);
+        if (preset) preset.eq_setting = [...this.eqSettings];
+        this.isPresetModified = false;
+        console.log('[EQ] Presets atjaunots veiksmīgi');
+
+        this.updateUserSettings({
+          selected_preset_id: this.selectedPresetId,
+          eq_settings: this.eqSettings
+        });
+      },
+      error: (err) => {
+        console.error('[EQ] Neizdevās atjaunot presetu:', err);
+      }
+    });
+  }
+
+
+  // Stereo paplasinatajs
+
+  onStereoToggle(event: Event) {
+      // тovērš iespējamus vienlaicīgus izsaukumus
+    if (this.isToggleBlocked) {
+      console.log('[Stereo] Toggle blocked, ignoring');
+      return;
+    }
+
+    this.isToggleBlocked = true;
+
+    // pārslēdz stereo paplašinājuma statusu
+    this.stereoEnabled = !this.stereoEnabled;
+    console.log('[Stereo] Toggle changed to:', this.stereoEnabled);
+
+    // atjauno DB
+    this.updateUserSettings({
+      stereo_expansion_enabled: this.stereoEnabled,
+      stereo_expansion_level: this.stereoLevel
+    });
+
+    // pārveido audio ķēdi nākamajā animācijas kadrā
+    requestAnimationFrame(() => {
+      this.rebuildAudioChain();
+      // atslēdz aizsardzību pēc īsa brīža lai izvairītos no pārāk biežas pārslēgšanas
+      setTimeout(() => {
+        this.isToggleBlocked = false;
+      }, 100);
+    });
+  }
+
+  onStereoLevelChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.stereoLevel = +input.value;
+  
+    // ja stereo paplašinājums ir ieslēgts piemēro izmaiņas reāli
+    if (this.stereoEnabled) {
+      const sideGain = this.stereoLevel * 2;
+      this.stereoGainNode.gain.value = sideGain - 1;
+    }
+  
+    // aizkavēta (debounce) atjaunināšana datubāzē
+    if (this.stereoUpdateTimer) {
+      clearTimeout(this.stereoUpdateTimer);
+    }
+    this.stereoUpdateTimer = setTimeout(() => {
+      this.updateUserSettings({
+        stereo_expansion_level: this.stereoLevel
+      });
+      this.stereoUpdateTimer = null;
+    }, 500);
+  }
+  
+  resetStereoLevel() {
+    console.log('[Stereo] Resetting stereo level to 0.5');
+    this.stereoLevel = 0.5; // Atiestata uz standarta stereo
+    
+    // saglabā jauno līmeni datubāzē
+    this.updateUserSettings({
+      stereo_expansion_level: 0.5
+    });
+
+    // atjauno visu audio ķēdi, lai nodrošinātu pareizu savienojumu
+    requestAnimationFrame(() => {
+      this.rebuildAudioChain();
+    });
+  }
+  
+  applyStereoExpansion() {
+    if (!this.audioCtx || !this.masterGainNode) return;
+  
+    try {
+      console.log('[Stereo] Applying expansion with level:', this.stereoLevel);
+      
+      // atvieno iepriekšējos stereo mezglus
+      this.stereoChannelSplitter.disconnect();
+      this.stereoMerger.disconnect();
+      this.stereoGainNode.disconnect();
+
+      if (this.stereoEnabled) {
+        // aprēķina stereo paplašinājuma intensitāti (0–1)
+        const width = this.stereoLevel;
+        const sideGain = width * 2;
+
+        // atvieno masterGain no iepriekšējās ķēdes
+        this.masterGainNode.disconnect();
+        
+        // savieno masterGain ar stereo sadalītāju
+        this.masterGainNode.connect(this.stereoChannelSplitter);
+
+        // novirza kanālus uz stereo apvienotāju (sākotnējie L un R)
+        this.stereoChannelSplitter.connect(this.stereoMerger, 0, 0);
+        this.stereoChannelSplitter.connect(this.stereoMerger, 1, 1);
+
+        // savieno kanālus uz stereo paplašinātāja mezglut to right
+        this.stereoChannelSplitter.connect(this.stereoGainNode, 1, 0); // Right to left
+        this.stereoGainNode.gain.value = sideGain - 1;
+
+        // pievieno paplašināto signālu atpakaļ stereo
+        this.stereoGainNode.connect(this.stereoMerger, 0, 1); // To right channel
+        this.stereoGainNode.connect(this.stereoMerger, 0, 0); // To left channel
+
+        // savieno ar nākamo efektu ķēdē (EQ ja ieslēgts, citādi kompresoru)
+        this.stereoMerger.disconnect();
+        this.stereoMerger.connect(this.eqEnabled ? this.eqGainNode : this.compressor);
+
+        console.log('[Stereo] Expansion applied successfully');
+      } else {
+        // ja stereo ir izslēgts, savieno masterGain tieši ar nākamo efektu
+        this.masterGainNode.disconnect();
+        this.masterGainNode.connect(this.eqEnabled ? this.eqGainNode : this.compressor);
+        console.log('[Stereo] Stereo disabled, connecting directly to next effect');
+      }
+    } catch (e) {
+      console.warn('[Stereo] Error applying expansion:', e);
+    }
+  }
 
 
 
@@ -1424,48 +1995,34 @@ export class PlayerComponent {
   // piemēro visus skaļumus
   // šī funkcija nodrošina, ka visi audio ceļi ir iestatīti ar pareizajiem skaļumiem
   private applyAllVolumes() {
-    console.log('piemērojam skaļumus, stems režīms:', this.isStemsMode, 'hasStems:', this.hasStems);
+    console.log('[Volume] Applying volumes:', {
+      isStemsMode: this.isStemsMode,
+      hasStems: this.hasStems,
+      volume: this.volume
+    });
     
-    // galvenās dziesmas skaļums - vienmēr atskaņo normālajā režīmā ja stems nav pieejami
+    // peimero skalumu uz main track
     const mainGain = this.gainNodes.get('main');
     if (mainGain) {
-      // ja stems nav pieejami, vienmēr atskaņo galveno dziesmu neatkarīgi no režīma
       const mainVolume = (!this.hasStems || !this.isStemsMode) ? this.volume : 0;
       mainGain.gain.value = mainVolume;
-      console.log('galvenās dziesmas skaļums iestatīts uz:', mainVolume);
     }
 
-    // stem skaļumi ar pareizu boosting - piemēro tikai ja stems ir pieejami
+    // piemero volume ja ir stems
     if (this.hasStems) {
       for (const type of ['bass', 'drums', 'melody', 'vocals']) {
         const gain = this.gainNodes.get(type);
-        if (!gain) {
-          console.log('nav atrasts gain mezgls priekš:', type);
-          continue;
-        }
+        if (!gain) continue;
 
         const baseVolume = this.stemVolumes[type] ?? 0.5;
         const boosted = Math.max(0, Math.min((baseVolume - 0.5) * 2 + 1.0, 1.5));
         const finalVolume = this.isStemsMode ? boosted * this.volume : 0;
         gain.gain.value = finalVolume;
-        
-        console.log('stem skaļums priekš', type, ':', {
-          baseVolume,
-          boosted,
-          finalVolume,
-          isStemsMode: this.isStemsMode
-        });
-      }
-    } else {
-      // ja stems nav pieejami, nodrošina ka visi stem gain ir iestatīti uz 0
-      for (const type of ['bass', 'drums', 'melody', 'vocals']) {
-        const gain = this.gainNodes.get(type);
-        if (gain) {
-          gain.gain.value = 0;
-          console.log('iestatīts stem skaļums uz 0 priekš:', type, '(stems nav pieejami)');
-        }
       }
     }
+
+    // izveidojam audio chain
+    this.rebuildAudioChain();
   }
 
   // pievieno metodi stems pieejamības pārbaudei
@@ -1482,7 +2039,6 @@ export class PlayerComponent {
     return allPresent;
   }
 
-  // Add this method to get the source URL
   getSourceUrl(): string | null {
     if (!this.sourceType || !this.sourceId) return null;
     
@@ -1493,6 +2049,221 @@ export class PlayerComponent {
         return `/album/${this.sourceId}`;
       default:
         return null;
+    }
+  }
+
+  updateUserSettings(data: Partial<UserAudioSettings>) {
+    // parliecinamies, ka eq_settings ir masivs un selected_preset_id ir skaitlis
+    const settingsToUpdate = {
+      ...data,
+      eq_settings: Array.isArray(data.eq_settings) ? data.eq_settings : this.eqSettings,
+      selected_preset_id: data.selected_preset_id !== undefined ? 
+        (typeof data.selected_preset_id === 'string' ? 
+          parseInt(data.selected_preset_id, 10) : 
+          data.selected_preset_id) : 
+        this.selectedPresetId
+    };
+
+    console.log('[EQ] Saglabajam iestatijumus:', settingsToUpdate);
+
+    // saglabajam DB
+    this.equalizerService.updateUserSettings(settingsToUpdate).subscribe({
+      next: (response) => {
+        console.log('[EQ] Iestatijumi veiksmigi saglabati DB:', response);
+        // atjaunojam UI tikai pec veiksmigas saglabasanas
+        this.cdr.detectChanges();
+      },
+      error: (err: Error) => {
+        console.error('[EQ] Neizdevas saglabat iestatijumus DB:', err);
+        // ja neizdevas saglabat, atjaunojam UI
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  deletePreset(presetId: number) {
+    console.log('Deleting preset:', presetId);
+    if (!confirm('Vai tiešām vēlaties dzēst šo presetu?')) return;
+
+    this.equalizerService.deletePreset(presetId).subscribe({
+      next: () => {
+        console.log('[EQ] Presets deleted:', presetId);
+        
+        // ja dzēš pašreiz izvēlēto presetu, atiestata izvēli
+        if (this.selectedPresetId === presetId) {
+          this.selectedPresetId = null;
+          this.selectedPresetIcon = null;
+          this.isPresetModified = false;
+          
+          // saglabā iestatījumus bez preseta
+          this.updateUserSettings({
+            selected_preset_id: null,
+            eq_settings: this.eqSettings
+          });
+        }
+        
+        // atjauno presetu sarakstu
+        this.equalizerService.getPresets().subscribe({
+          next: (presets: EqualizerPreset[]) => {
+            console.log('[EQ] Reloaded presets after deletion:', presets);
+            this.userPresets = presets ?? [];
+            this.cdr.detectChanges();
+          },
+          error: (err) => {
+            console.error('[EQ] Failed to reload presets:', err);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('[EQ] Failed to delete preset:', err);
+      }
+    });
+  }
+
+  getSelectedPresetName(): string {
+    if (!this.selectedPresetId) return 'Noklusējuma';
+    const preset = this.userPresets.find(p => p.eq_preset_id === this.selectedPresetId);
+    return preset?.name ?? 'Noklusējuma';
+  }
+
+  // inicializē audio apstrādes ķēdi
+  private setupAudioProcessingChain() {
+    if (!this.audioCtx) return;
+
+    console.log('[Audio Chain] Setting up processing chain:', {
+      stereoEnabled: this.stereoEnabled,
+      eqEnabled: this.eqEnabled,
+      stereoLevel: this.stereoLevel,
+      eqSettings: this.eqSettings
+    });
+
+    // atvieno visus esošos savienojumus
+    this.disconnectAllEffects();
+
+    // pamata ķēde: masterGain -> kompresors -> skaņas karte
+    this.masterGainNode.disconnect();
+    this.masterGainNode.connect(this.compressor);
+    this.compressor.disconnect();
+    this.compressor.connect(this.audioCtx.destination);
+
+    // piemēro stereo paplašinājumu, ja ieslēgts
+    if (this.stereoEnabled) {
+      console.log('[Audio Chain] Applying stereo expansion');
+      this.applyStereoExpansion();
+    }
+
+    // Piemēro ekvalaizeru, ja ieslēgts
+    if (this.eqEnabled) {
+      console.log('[Audio Chain] Applying EQ');
+      this.applyEq();
+    }
+
+  }
+
+  // atvieno visus efektu mezglus
+  private disconnectAllEffects() {
+    if (!this.audioCtx) return;
+
+    // atvieno visus mezglus
+    this.masterGainNode.disconnect();
+    this.stereoChannelSplitter.disconnect();
+    this.stereoMerger.disconnect();
+    this.stereoGainNode.disconnect();
+    this.eqGainNode?.disconnect();
+    this.compressor.disconnect();
+
+    this.disconnectEqFilters();
+  }
+
+  // pārbūvē visu audio efektu ķēdi no jauna
+  private rebuildAudioChain() {
+    if (!this.audioCtx) {
+      console.warn('[Audio Chain] No audio context available');
+      return;
+    }
+
+    try {
+      console.log('[Audio Chain] Rebuilding chain:', {
+        stereoEnabled: this.stereoEnabled,
+        eqEnabled: this.eqEnabled,
+        stereoLevel: this.stereoLevel,
+        eqSettings: this.eqSettings,
+        selectedPresetId: this.selectedPresetId
+      });
+
+      // atvieno visus esošos efektus
+      this.disconnectAllEffects();
+
+      // sāk ar master gain
+      let currentNode: AudioNode = this.masterGainNode;
+
+      // ja stereo ir ieslēgts, piemēro stereo paplašinājumu
+      if (this.stereoEnabled) {
+        console.log('[Audio Chain] Adding stereo expansion');
+        
+        // Sadalīt kanālus un atkal apvienot
+        currentNode.disconnect();
+        currentNode.connect(this.stereoChannelSplitter);
+
+        this.stereoChannelSplitter.connect(this.stereoMerger, 0, 0);
+        this.stereoChannelSplitter.connect(this.stereoMerger, 1, 1);
+
+        const sideGain = this.stereoLevel * 2;
+        this.stereoChannelSplitter.connect(this.stereoGainNode, 0, 0);
+        this.stereoChannelSplitter.connect(this.stereoGainNode, 1, 0);
+        this.stereoGainNode.gain.value = sideGain - 1;
+
+        this.stereoGainNode.connect(this.stereoMerger, 0, 1);
+        this.stereoGainNode.connect(this.stereoMerger, 0, 0);
+
+        currentNode = this.stereoMerger;
+      }
+
+      // ja ekvalaizers ir ieslēgts, piemēro EQ filtrus
+      if (this.eqEnabled) {
+        console.log('[Audio Chain] Adding EQ');
+        
+        currentNode.disconnect();
+        currentNode.connect(this.eqGainNode);
+
+        if (this.eqFilters.length === 0) {
+          console.log('[Audio Chain] Creating EQ filters');
+          this.eqFilters = this.eqFrequencies.map(freq => {
+            const filter = this.audioCtx.createBiquadFilter();
+            filter.type = 'peaking';
+            filter.frequency.value = freq;
+            filter.Q.value = 1;
+            return filter;
+          });
+        }
+
+        let previousNode: AudioNode = this.eqGainNode;
+        this.eqFilters.forEach((filter, index) => {
+          filter.disconnect();
+          filter.gain.value = this.eqSettings[index];
+          previousNode.connect(filter);
+          previousNode = filter;
+        });
+
+        currentNode = this.eqFilters[this.eqFilters.length - 1];
+      }
+
+      // savieno ar kompresoru un audio izeju
+      currentNode.disconnect();
+      currentNode.connect(this.compressor);
+      this.compressor.disconnect();
+      this.compressor.connect(this.audioCtx.destination);
+
+      console.log('[Audio Chain] Chain rebuild complete');
+    } catch (error) {
+      console.error('[Audio Chain] Error rebuilding chain:', error);
+      // mēģinam atkopties, savienojot tieši ar audio izeju
+      try {
+        this.masterGainNode.disconnect();
+        this.masterGainNode.connect(this.audioCtx.destination);
+      } catch (e) {
+        console.error('[Audio Chain] Recovery failed:', e);
+      }
     }
   }
 }

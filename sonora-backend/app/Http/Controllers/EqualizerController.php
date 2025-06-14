@@ -44,12 +44,20 @@ class EqualizerController extends Controller
 
         $data = $request->validate([
             'name' => 'nullable|string|max:255',
-            'icon' => 'nullable|string|max:50'
+            'icon' => 'nullable|string|max:50',
+            'eq_setting' => 'nullable|array',
+            'position' => 'nullable|integer'
         ]);
+
+        // Ja ir eq_setting, pārveidojam to JSON
+        if (isset($data['eq_setting'])) {
+            $data['eq_setting'] = json_encode($data['eq_setting']);
+        }
 
         $preset->update($data);
 
-        return response()->json(['message' => 'Preset updated']);
+        // Atgriežam atjaunināto presetu
+        return response()->json($preset);
     }
 
     // dzest presetu
@@ -86,7 +94,7 @@ class EqualizerController extends Controller
         $data = $request->validate([
             'eq_enabled' => 'boolean',
             'eq_settings' => 'array',
-            'selected_preset_id' => 'nullable|integer|exists:equalizer_presets,id',
+            'selected_preset_id' => 'nullable|integer|exists:equalizer_presets,eq_preset_id',
             'stereo_expansion_enabled' => 'boolean',
             'stereo_expansion_level' => 'numeric|min:0|max:2'
         ]);

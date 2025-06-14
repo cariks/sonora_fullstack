@@ -32,6 +32,7 @@ import {AddToPlaylistModalComponent} from "./shared/components/add-to-playlist-m
 import {
   PlaylistOptionsModalComponent
 } from "./shared/components/playlist-options-modal/playlist-options-modal.component";
+import { EqualizerService } from './services/equalizer.service';
 
 
 
@@ -76,7 +77,8 @@ import {
     provide: HTTP_INTERCEPTORS,
     useClass: AuthInterceptor,
     multi: true
-    }
+    },
+    EqualizerService
   ],
   bootstrap: [AppComponent]
 })

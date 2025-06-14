@@ -52,22 +52,52 @@
         <!-- Effects panelis -->
         <div
             *ngIf="showEffects"
-            class="absolute inset-0 z-30 rounded-[12px] bg-dark-2/70 backdrop-blur-xl p-6 shadow-xl"
+            class="absolute inset-0 z-30 rounded-[12px] bg-gray-3/30 backdrop-blur-xl p-6 shadow-xl"
           >
 
-          <div class="flex space-x-3 mb-4">
-            <button (click)="selectedEffectTab = 'stems'" [class.active]="selectedEffectTab === 'stems'">Stems</button>
-            <button (click)="selectedEffectTab = 'eq'" [class.active]="selectedEffectTab === 'eq'">EQ</button>
-            <button (click)="selectedEffectTab = 'stereo'" [class.active]="selectedEffectTab === 'stereo'">Stereo</button>
+          <div class="flex text-[16px] font-semibold space-x-3 mb-4 gap-3 h-[52px]">
+            <button (click)="setEffectsTab('eq')" 
+              [ngClass]="{
+                'bg-dark-2/50 text-white': selectedEffectTab === 'eq',
+                'text-gray-1 hover:text-white': selectedEffectTab !== 'eq'
+              }"
+              class="w-full rounded-full transition-colors duration-200">
+              Ekvalaizeris
+            </button>
+
+            <button (click)="setEffectsTab('stereo')" 
+              [ngClass]="{
+                'bg-dark-2/50 text-white': selectedEffectTab === 'stereo',
+                'text-gray-1 hover:text-white': selectedEffectTab !== 'stereo'
+              }"
+              class="w-full rounded-full transition-colors duration-200">
+              Stereo
+            </button>
+
+            <button (click)="setEffectsTab('stems')" 
+              [ngClass]="{
+                'bg-dark-2/50 text-white': selectedEffectTab === 'stems',
+                'text-gray-1 hover:text-white': selectedEffectTab !== 'stems'
+              }"
+              class="w-full rounded-full transition-colors duration-200">
+              Stems celiņi
+            </button>
           </div>
           
           <div *ngIf="selectedEffectTab === 'stems'">
             <!-- STEMS SADALA -->
             
-            <div class="flex justify-between items-center gap-3 mt-4">
-              <div class="flex items-center gap-3">
-                <label class="text-[16px] font-semibold">Stems režīms</label>
-                <!-- Custom Stems Toggle -->
+            <div class="flex justify-between items-center gap-3 mt-4 ">
+
+              <div class="w-full bg-dark-2/50 p-6 rounded-[30px] flex items-center justify-between mb-4 h-[92px]">
+                <label class="flex items-center gap-4 font-semibold text-[21px]">
+                  Stems režīms
+
+                  <!-- Ziņojums, ja stems nav pieejami -->
+                  <span *ngIf="!hasStems" class="text-sm text-neutral-500">
+                    Stems režīms nav pieejams šim ierakstam
+                  </span>
+                </label>
                 <label class="relative inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -78,9 +108,9 @@
                   <div
                     [ngClass]="{
                       'bg-neutral-700': !hasStems || !isStemsMode,
-                      'bg-green-500': hasStems && isStemsMode
+                      'bg-accent': hasStems && isStemsMode
                     }"
-                    class="w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-green-500
+                    class="w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent
                     rounded-full peer transition duration-300"
                   ></div>
                   <div
@@ -88,27 +118,27 @@
                     transition-all duration-300 peer-checked:translate-x-full"
                   ></div>
                 </label>
-                
-                <!-- Ziņojums, ja stems nav pieejami -->
-                <span *ngIf="!hasStems" class="text-sm text-neutral-500">
-                  Stems režīms nav pieejams šim ierakstam
-                </span>
               </div>
-  
-              <button
-                (click)="resetStemVolumes()"
-                [disabled]="!hasStems"
-                class="px-6 py-2 border border-gray-4 text-sm rounded bg-dark-2 hover:bg-dark-1 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Atiestatīt
-              </button>
+
             </div>
   
             <!-- Stem skaļuma kontrole -->
-            <div>
-              <div *ngIf="hasStems; else noStems" class="flex flex-col gap-4 pt-6">
+            <div *ngIf="hasStems" class="bg-dark-2/50 p-6 rounded-[30px]">
+              <div class="w-full flex justify-end">
+                <button
+                  (click)="resetStemVolumes()"
+                  [disabled]="!hasStems"
+                  class="px-4 rounded-full bg-dark-2/50 text-[12px] font-semibold text-white hover:bg-dark-2/70 transition-all items-center flex gap-2 h-[34px]"
+                >
+                  Atiestatīt
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1.40625 4.83131H8.07328C8.07328 4.83131 10.666 4.83131 10.666 7.60923C10.666 10.7344 8.07328 10.7344 8.07328 10.7344H7.3325M1.40625 4.83131L4.64717 7.95648M1.40625 4.83131L4.64717 1.47464" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+              </div>
+              <div class="flex flex-col gap-6 mt-4 mb-2">
                 <div *ngFor="let stem of stems" class="flex items-center gap-4">
-                  <span class="capitalize w-20">{{ stem.type }}</span>
+                  <span class="capitalize w-20 text-[16px] font-semibold">{{ stem.type }}</span>
                   <input
                     type="range"
                     min="0"
@@ -121,56 +151,190 @@
                 </div>
               </div>
   
-              <ng-template #noStems>
-                <p class="text-neutral-500 text-sm">Šim ierakstam nav pieejamas stem celiņi.</p>
-              </ng-template>
+
             </div>
           </div>
+
+
+        <!-- Stereo paplasinatajs   -->
+        <div *ngIf="selectedEffectTab === 'stereo'">
           
+          <div class="flex justify-between items-center gap-3 mt-4 ">
+
+            <div class="w-full bg-dark-2/50 p-6 rounded-[30px] flex items-center justify-between mb-4 h-[92px]">
+              <label class="flex items-center gap-4 font-semibold text-[21px]">
+                Stereo paplašinātājs
+              </label>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="sr-only peer"
+                  [checked]="stereoEnabled"
+                  (change)="onStereoToggle($event)"
+                />
+                <div
+                  [ngClass]="{
+                    'bg-neutral-700': !stereoEnabled,
+                    'bg-accent': stereoEnabled
+                  }"
+                  class="w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent
+                  rounded-full peer transition duration-300"
+                ></div>
+                <div
+                  class="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full
+                  transition-all duration-300 peer-checked:translate-x-full"
+                ></div>
+              </label>
+            </div>
+
+          </div>
+
+          <!-- Stereo slidnis -->
+          <div *ngIf="hasStems" class="bg-dark-2/50 p-6 rounded-[30px]">
+            <div class="w-full flex justify-end">
+              <button
+                (click)="resetStereoLevel()"
+                class="px-4 rounded-full bg-dark-2/50 text-[12px] font-semibold text-white hover:bg-dark-2/70 transition-all items-center flex gap-2 h-[34px]"
+              >
+                Atiestatīt
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1.40625 4.83131H8.07328C8.07328 4.83131 10.666 4.83131 10.666 7.60923C10.666 10.7344 8.07328 10.7344 8.07328 10.7344H7.3325M1.40625 4.83131L4.64717 7.95648M1.40625 4.83131L4.64717 1.47464" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+              </button>
+            </div>
+            <div class="flex flex-col gap-6 mt-4 mb-2">
+              <div class="flex items-center gap-4">
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  [(ngModel)]="stereoLevel"
+                  (input)="onStereoLevelChange($event)"
+                  class="w-full appearance-none h-1 bg-neutral-700 rounded-full cursor-pointer"
+                />
+              </div>
+            </div>
+
+
+          </div>
+        </div>
           
 
 
           <div *ngIf="selectedEffectTab === 'eq'">
             <!-- EKVALAIZERIS -->
-
-            <div class="flex justify-between items-center gap-4 mb-4">
-              <label class="flex items-center gap-2 font-semibold text-[16px]">
+            <div class="w-full bg-dark-2/50 p-3 rounded-[30px] flex items-center justify-between mb-4">
+              <label class="flex items-center gap-4 font-semibold text-[21px] pl-4">
                 Ekvalaizers
-                <input type="checkbox" [(ngModel)]="eqEnabled" (change)="onEqToggle()" />
+                <!-- Custom Toggle -->
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    class="sr-only peer"
+                    [checked]="eqEnabled"
+                    (change)="onEqToggle()"
+                  />
+                  <div
+                    [ngClass]="{
+                      'bg-neutral-700': !eqEnabled,
+                      'bg-accent': eqEnabled
+                    }"
+                    class="w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-accent
+                    rounded-full peer transition duration-300"
+                  ></div>
+                  <div
+                    class="absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full
+                    transition-all duration-300 peer-checked:translate-x-full"
+                  ></div>
+                </label>
               </label>
-            
-              <div class="flex gap-2">
-                <button (click)="resetEq()" class="px-4 py-1 bg-neutral-700 rounded text-sm">Atiestatīt</button>
+
+              <div class="flex items-center gap-2">
+                <div class="relative w-[280px]">
+                  <button 
+                    (click)="togglePresetDropdown($event)" 
+                    class="preset-selector flex items-center gap-4 bg-dark-2/50 backdrop-blur-sm text-white text-[16px] font-semibold px-4 h-[68px] rounded-[22px] w-full"
+                  >
+                    <div class="w-8 h-8 flex items-center justify-center">
+                      <img *ngIf="selectedPresetIcon" [src]="'/assets/icons/' + selectedPresetIcon + '.svg'" class="w-8 h-8" />
+                      <i *ngIf="!selectedPresetIcon" class="fas fa-sliders-h text-[18px]"></i>
+                    </div>
+                    <span class="flex-1 text-left">{{ getSelectedPresetName() }}</span>
+                    <div class="w-8 h-8 flex items-center justify-center">
+                      <i class="fas fa-chevron-down text-[16px]"></i>
+                    </div>
+                  </button>
+                </div>
               </div>
             </div>
-            
-            <div class="flex justify-between items-end gap-4 h-[180px] mt-4">
-              <ng-container *ngFor="let freq of eqFrequencies; let i = index">
-                <div class="flex flex-col items-center gap-2">
-                  <input
-                    type="range"
-                    min="-30"
-                    max="30"
-                    step="1"
-                    orient="vertical"
-                    class="h-[140px] w-4 appearance-none bg-neutral-700 rounded-full cursor-pointer"
-                    [value]="eqSettings[i]"
-                    (input)="onEqSliderChange(i, $event)"
-                    >          
-                    <span class="text-xs">{{ freq }}Hz</span>
+
+            <div class="w-full bg-dark-2/50 p-6 rounded-[30px] mb-4">
+              <div class="flex justify-between">
+                <div class="flex gap-4">
+
+                  <!-- Saglabat -->
+                  <button
+                  (click)="openCreatePresetModal()"
+                  class="px-4 rounded-full bg-dark-2/50 text-[12px] font-semibold text-white hover:bg-dark-2/70 transition-all items-center flex gap-2 h-[34px]"
+                  >
+                    Saglabāt
+                    <svg width="13" height="14" viewBox="0 0 13 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M6.1925 12.5444L6.1925 1.69086M0.769531 7.11373H11.623" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                      </svg>
+                      
+                  </button>
+
+                  <!-- Atjaunot -->
+                  <button
+                  *ngIf="isPresetModified"
+                  (click)="updateCurrentPreset()"
+                  class="px-4 rounded-full bg-dark-2/50 text-[12px] font-semibold text-white hover:bg-dark-2/70 transition-all items-center flex gap-2 h-[34px]"
+                  >
+                    Saglabāt izmaiņas 
+                    <svg width="11" height="13" viewBox="0 0 11 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M4.73721 1.26734C4.6713 1.21039 4.61742 1.14086 4.57873 1.06283C4.54003 0.984793 4.51731 0.899819 4.51188 0.812886C4.50645 0.725954 4.51843 0.638813 4.54711 0.556569C4.5758 0.474326 4.62061 0.398635 4.67892 0.333933C4.73723 0.269231 4.80787 0.21682 4.8867 0.179772C4.96553 0.142723 5.05096 0.121782 5.13799 0.118176C5.22502 0.11457 5.31189 0.128372 5.39351 0.158772C5.47514 0.189172 5.54987 0.23556 5.61334 0.295216L7.79494 2.25866C7.863 2.32002 7.91741 2.395 7.95465 2.47873C7.99189 2.56246 8.01114 2.65308 8.01114 2.74472C8.01114 2.83636 7.99189 2.92697 7.95465 3.0107C7.91741 3.09443 7.863 3.16941 7.79494 3.23078L5.61334 5.19422C5.48379 5.30614 5.31554 5.36285 5.14467 5.35218C4.9738 5.34151 4.81391 5.26431 4.69929 5.13714C4.58468 5.00996 4.52446 4.84294 4.53154 4.67188C4.53863 4.50082 4.61246 4.33935 4.73721 4.2221L5.86291 3.20896C5.00998 3.10642 4.14695 3.2864 3.4061 3.72133C2.66526 4.15626 2.08748 4.82214 1.76132 5.61689C1.43516 6.41165 1.37863 7.29143 1.60038 8.1214C1.82213 8.95136 2.30993 9.68571 2.98902 10.2119C3.6681 10.7381 4.501 11.027 5.36004 11.0345C6.21909 11.042 7.05688 10.7675 7.74501 10.2532C8.43314 9.73894 8.93364 9.01319 9.16979 8.1872C9.40593 7.36122 9.3647 6.48058 9.05241 5.68028C9.02113 5.60017 9.00593 5.51469 9.00768 5.42871C9.00943 5.34274 9.0281 5.25795 9.06262 5.17918C9.09714 5.10042 9.14683 5.02923 9.20886 4.96967C9.2709 4.91011 9.34405 4.86336 9.42416 4.83207C9.50426 4.80079 9.58974 4.78558 9.67572 4.78734C9.7617 4.78909 9.84649 4.80775 9.92525 4.84227C10.004 4.87679 10.0752 4.92649 10.1348 4.98852C10.1943 5.05056 10.2411 5.12371 10.2724 5.20382C10.6794 6.24647 10.7416 7.39212 10.4498 8.47271C10.1581 9.5533 9.52772 10.512 8.65121 11.208C7.77471 11.9041 6.6982 12.301 5.57961 12.3405C4.46102 12.3799 3.35922 12.0599 2.43584 11.4273C1.51246 10.7947 0.816109 9.88286 0.448928 8.82551C0.0817466 7.76816 0.0630658 6.62098 0.395626 5.55224C0.728186 4.48349 1.39448 3.54945 2.29677 2.88713C3.19907 2.2248 4.28986 1.86906 5.40914 1.87208L4.73721 1.26734Z" fill="white"/>
+                      </svg>
+                      
+                  </button>
                 </div>
-              </ng-container>
+
+                <!-- Attiestatit -->
+                <button (click)="resetEq()" 
+                  class="px-4 rounded-full bg-dark-2/50 text-[12px] font-semibold text-white hover:bg-dark-2/70 transition-all items-center flex gap-2 h-[34px]"
+                  >
+                    Atiestatīt
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1.50977 4.8444H8.1768C8.1768 4.8444 10.7695 4.8444 10.7695 7.62233C10.7695 10.7475 8.1768 10.7475 8.1768 10.7475H7.43601M1.50977 4.8444L4.75068 7.96957M1.50977 4.8444L4.75068 1.48773" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                  </button>
+
+              </div>
+
+              <!-- Ekvalaizera slidni -->
+              <div class="flex justify-between items-end gap-4 h-[240px] mt-6 px-8">
+                <ng-container *ngFor="let freq of eqFrequencies; let i = index">
+                  <div class="flex flex-col items-center gap-2">
+                    <input
+                      type="range"
+                      min="-15"
+                      max="15"
+                      step="1"
+                      orient="vertical"
+                      class="h-full w-4 appearance-none rounded-full cursor-pointer"
+                      [value]="eqSettings[i]"
+                      (input)="onEqSliderChange(i, $event)"
+                      >          
+                      <span class="text-[12px] font-semibold mt-2">{{ freq }}Hz</span>
+                  </div>
+                </ng-container>
+              </div>
+
+
             </div>
-            
 
 
           </div>
-          
-          <div *ngIf="selectedEffectTab === 'stereo'">
-            <!-- STEREO -->
-          </div>
-          
-
 
           </div>
         </div>
@@ -591,3 +755,106 @@ TIKAI JA IR TIMESTAMPED
 
   </div>
 </div>
+
+<!-- CREATE PRESET MODAL -->
+<div *ngIf="showPresetModal" 
+     class="absolute inset-0 bg-dark-2/30 backdrop-blur-xl flex items-center justify-center z-50">
+  <div class="bg-dark-2/50 backdrop-blur-xl p-8 rounded-[30px] w-[540px] mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-[27px] font-semibold">Saglabāt iestatījumu</h2>
+      <button (click)="closePresetModal()" class="text-sm transition-colors">
+        <svg width="32px" height="32px" stroke-width="3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" color="#FFFFFF">
+          <path d="M6.75827 17.2426L12.0009 12M17.2435 6.75736L12.0009 12M12.0009 12L6.75827 6.75736M12.0009 12L17.2435 17.2426" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </button>
+    </div>
+
+    <label class="block mb-2 text-white text-[21px] font-medium">Nosaukums</label>
+    <input
+      type="text"
+      [(ngModel)]="newPresetName"
+      maxlength="20"
+      class="w-[70%] px-3 py-2 h-[48px] rounded-[12px] bg-dark-2/50 border border-gray-2/20 text-white mb-4 placeholder-gray-2"
+      placeholder="Nosaukums"
+    />
+
+    <label class="block mb-2 text-white text-[21px] font-medium">Ikona</label>
+    <div class="grid grid-cols-6 gap-3 mb-4">
+      <div
+        *ngFor="let icon of availableIcons"
+        (click)="selectPresetIcon(icon)"
+        class="p-2 rounded-[12px] border cursor-pointer transition-colors aspect-square flex items-center justify-center"
+        [ngClass]="{
+          'border-white border-2': newPresetIcon === icon,
+          'border-neutral-700 hover:border-neutral-600': newPresetIcon !== icon
+        }"
+      >
+        <img [src]="'/assets/icons/' + icon + '.svg'" class="w-8 h-8" />
+      </div>
+    </div>
+
+    <div class="flex w-full mt-8">
+      <button (click)="savePreset()" 
+              [disabled]="!newPresetName || !newPresetIcon"
+              class="text-[16px] w-full h-[56px] px-4 py-1 font-semibold rounded-[12px] bg-white text-gray-4 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        Saglabāt
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Preset dropdown outside -->
+<div *ngIf="showPresetDropdown" 
+     class="preset-dropdown fixed bg-dark-2/50 backdrop-blur-xl rounded-[30px] z-[1000] max-h-[320px] overflow-y-auto shadow-lg"
+     [style.top.px]="presetDropdownTop"
+     [style.left.px]="presetDropdownLeft"
+     [style.width.px]="280"
+     (click)="$event.stopPropagation()">
+  <div (click)="selectPreset(null)" 
+       class="flex items-center justify-between px-4 py-3 h-[68px] cursor-pointer hover:bg-dark-2/60 transition-colors">
+    <div class="flex items-center gap-4 flex-1">
+      <div class="w-8 h-8 flex items-center justify-center">
+        <i class="fas fa-sliders-h text-[px]"></i>
+      </div>
+      <span class="text-[16px] font-semibold text-left">Noklusējuma</span>
+    </div>
+  </div>
+  <div *ngFor="let preset of userPresets" 
+       (click)="selectPreset(preset.eq_preset_id)"
+       class="flex items-center justify-between px-4 py-3 h-[68px] cursor-pointer hover:bg-dark-2/60 transition-colors">
+    <div class="flex items-center gap-4 flex-1">
+      <div class="w-8 h-8 flex items-center justify-center">
+        <img [src]="'/assets/icons/' + preset.icon + '.svg'" class="w-8 h-8" />
+      </div>
+      <span class="text-[16px] font-semibold text-left">{{ preset.name }}</span>
+    </div>
+    <button 
+      (click)="deletePreset(preset.eq_preset_id); $event.stopPropagation()" 
+      class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+      title="Dzēst presetu"
+    >
+      <i class="fas fa-trash text-[16px]"></i>
+    </button>
+  </div>
+</div>
+
+<style>
+/* Scrollbar styles */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+</style>
+

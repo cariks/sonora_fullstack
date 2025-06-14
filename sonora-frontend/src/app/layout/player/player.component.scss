@@ -52,7 +52,7 @@ input[type="range"].custom-range::-moz-range-progress {
 input[type="range"].custom-range::-moz-range-thumb {
   height: 14px;
   width: 14px;
-  background: var(--thumb-color);
+  background: #FFFFFF;
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -60,11 +60,10 @@ input[type="range"].custom-range::-moz-range-thumb {
 
 /* Vertical range inputs */
 input[type="range"][orient="vertical"] {
-  writing-mode: bt-lr; /* IE */
-  -webkit-appearance: slider-vertical; /* WebKit */
+  writing-mode: bt-lr;
+  -webkit-appearance: slider-vertical;
   width: 8px;
-  height: 140px;
-  padding: 0 5px;
+  height: 210px;
   background: transparent;
 }
 
@@ -73,10 +72,11 @@ input[type="range"][orient="vertical"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  background: white;
+  background: #FFFFFF;
   border-radius: 50%;
   cursor: pointer;
-  margin-top: -8px;
+  margin-top: -6px;
+  margin-left: -4px;
 }
 
 input[type="range"][orient="vertical"]::-webkit-slider-runnable-track {
@@ -90,7 +90,7 @@ input[type="range"][orient="vertical"]::-webkit-slider-runnable-track {
 input[type="range"][orient="vertical"]::-moz-range-thumb {
   width: 16px;
   height: 16px;
-  background: white;
+  background: #FFFFFF;
   border: none;
   border-radius: 50%;
   cursor: pointer;
